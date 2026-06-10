@@ -1,48 +1,69 @@
-## 📘 GitHub Learning Domains
+# Synci
 
-### 1. Introduction to Git and GitHub (22%)
-- Basics of Git and version control  
-- GitHub overview (accounts, entities, products)  
-- Markdown basics  
-- GitHub Desktop and GitHub Mobile  
+A simple media player built for people who watch subtitled content.
 
-### 2. Working with GitHub Repositories (8%)
-- Creating and cloning repositories  
-- README and CONTRIBUTING files  
-- Branches  
-- Stars  
-- Insights and feature previews  
+Synci is designed to remove the common frustrations of subtitles by making them work smoothly and naturally, without requiring constant adjustments or configuration.
 
-### 3. Collaboration Features (30%)
-- Issues (templates, forms, linking)  
-- Pull Requests (drafts, base & compare, reviews)  
-- Discussions  
-- Notifications  
-- Gists, Wikis, and GitHub Pages  
+The goal is simple:
 
-### 4. Modern Development (13%)
-- GitHub Actions basics  
-- GitHub Copilot (individual & business)  
-- Codespaces (lifecycle, dev containers, github.dev)  
+**Open your video, press play, and watch.**
 
-### 5. Project Management (7%)
-- Projects (layouts, workflows, insights)  
-- Labels and milestones  
-- Assignees  
-- Saved replies  
-- Templates  
+---
 
-### 6. Privacy, Security, and Administration (10%)
-- Two-factor authentication (2FA)  
-- Permissions and visibility  
-- Branch protection and CODEOWNERS  
-- Security tab  
-- Collaborators and organization settings  
+## Why Synci?
 
-### 7. Benefits of the GitHub Community (10%)
-- Open source collaboration  
-- GitHub Sponsors  
-- InnerSource  
-- Forking repositories  
-- Discoverable repositories  
-- GitHub Marketplace  
+Many media players are powerful but overwhelming.
+
+Synci focuses on simplicity.
+
+Instead of exposing dozens of subtitle settings and menus, Synci aims to provide a clean viewing experience where subtitles feel effortless.
+
+Whether you're watching movies, TV shows, anime, or educational content, Synci helps you focus on the content instead of fighting with subtitle settings.
+
+---
+
+## Goals
+
+* Simple and intuitive interface
+* Reliable subtitle support
+* Fast startup and lightweight performance
+* Minimal configuration
+* Clean viewing experience
+
+---
+
+## Planned Features
+
+* Video playback
+* External subtitle support
+* Automatic subtitle loading
+* Subtitle synchronization tools
+* Keyboard shortcuts
+* Playlist support
+* Watch history
+* Clean modern interface
+
+---
+
+## Tech Stack
+
+* Java
+* JavaFX
+* Git
+* GitHub
+
+---
+
+## Project Status
+
+🚧 Active Development
+
+Synci is currently being developed as a personal portfolio project.
+
+---
+
+## Vision
+
+The best media player is the one you don't have to think about.
+
+Synci aims to provide a distraction-free viewing experience where subtitles work naturally and the interface stays out of the way.
