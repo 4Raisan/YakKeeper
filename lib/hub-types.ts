@@ -1,0 +1,11 @@
+import {z} from 'zod';
+export type Project={id:string;owner_id:string;owner_name:string;title:string;summary:string;description:string;category:string;status:string;tags:string;needs:string;roadmap:string;repo:string;demo:string;visibility:string;personal:boolean;updated_at:string;preview?:boolean};
+export type HubUser={id:string;name:string;role:'owner'|'collaborator'|'visitor'};
+export type HubRequest={id:string;project_id:string;kind:string;name:string;email:string;message:string;status:string;notification:string;created_at:string};
+export type Invitation={id:string;email:string;expires_at:string;used_by:string|null};
+export type HubState={configured:boolean;projects:Project[];user:HubUser|null;inbox:HubRequest[];invites:Invitation[];whatsapp:boolean};
+export const blankProject={title:'',summary:'',description:'',category:'Web apps',status:'Open to contributors',tags:'',needs:'',roadmap:'',repo:'',demo:'',visibility:'public'};
+const url=z.string().trim().max(500).refine(v=>{if(!v)return true;try{return ['http:','https:'].includes(new URL(v).protocol);}catch{return false;}},'Use an HTTP(S) URL.');
+export const projectSchema=z.object({title:z.string().trim().min(1).max(120),summary:z.string().trim().min(10).max(240),description:z.string().trim().min(20).max(10000),category:z.enum(['Web apps','AI & research','Tools','Design','Other']),status:z.enum(['Open to contributors','In progress','Completed','Paused']),tags:z.string().trim().max(200),needs:z.string().trim().max(1000),roadmap:z.string().trim().max(3000),repo:url,demo:url,visibility:z.enum(['public','private','archived'])});
+export const submissionSchema=z.object({project_id:z.string().uuid(),kind:z.enum(['idea','contribution']),name:z.string().trim().min(1).max(120),email:z.string().trim().email().max(254),message:z.string().trim().min(20).max(4000),website:z.string().max(0)});
+export const statusSchema=z.enum(['Received','Reviewing','Accepted','Declined']);
