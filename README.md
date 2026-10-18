@@ -1,9 +1,5 @@
 # YakKeeper
 
-<p align="center">
-  <img src="docs/assets/yakkeeper-readme-logo.png" alt="YakKeeper" width="640">
-</p>
-
 Where projects meet their next contributors.
 
 A simple place to share my projects, collect ideas, and connect with people who want to contribute. Selected colleagues can publish their work in a separate Community section.
@@ -17,10 +13,6 @@ A simple place to share my projects, collect ideas, and connect with people who 
 - Email-bound, single-use invitations that expire after seven days.
 - Project updates across tabs, on focus, and every 30 seconds while visible.
 - Optional owner notifications through Meta WhatsApp Cloud API.
-
-## How it works
-
-![YakKeeper architecture](docs/assets/architecture.svg)
 
 ## Stack
 
