@@ -18,6 +18,10 @@ A simple place to share my projects, collect ideas, and connect with people who 
 - Project updates across tabs, on focus, and every 30 seconds while visible.
 - Optional owner notifications through Meta WhatsApp Cloud API.
 
+## How it works
+
+![YakKeeper architecture](docs/assets/architecture.svg)
+
 ## Stack
 
 Next.js, React, TypeScript, Supabase, and Vercel. Node.js 22 is required.
