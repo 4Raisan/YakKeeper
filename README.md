@@ -1,69 +1,77 @@
-# Synci
+# YakKeeper
 
-A simple media player built for people who watch subtitled content.
+Where projects meet their next contributors.
 
-Synci is designed to remove the common frustrations of subtitles by making them work smoothly and naturally, without requiring constant adjustments or configuration.
+A simple place to share my projects, collect ideas, and connect with people who want to contribute. Selected colleagues can publish their work in a separate Community section.
 
-The goal is simple:
+## Features
 
-**Open your video, press play, and watch.**
+- Personal and community project boards, search, and status filters.
+- Source and demo links, project details, and next steps.
+- Ideas and contribution requests without a visitor account.
+- Email-link sign-in for publishers and a private request inbox.
+- Email-bound, single-use invitations that expire after seven days.
+- Project updates across tabs, on focus, and every 30 seconds while visible.
+- Optional owner notifications through Meta WhatsApp Cloud API.
 
----
+## Stack
 
-## Why Synci?
+Next.js, React, TypeScript, Supabase, and Vercel. Node.js 22 is required.
 
-Many media players are powerful but overwhelming.
+## Run locally
 
-Synci focuses on simplicity.
+```sh
+npm ci
+cp .env.example .env.local
+```
 
-Instead of exposing dozens of subtitle settings and menus, Synci aims to provide a clean viewing experience where subtitles feel effortless.
+Set these values in `.env.local`:
 
-Whether you're watching movies, TV shows, anime, or educational content, Synci helps you focus on the content instead of fighting with subtitle settings.
+| Variable | Value |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable key |
+| `SUPABASE_SECRET_KEY` | Server-only Supabase secret key |
+| `OWNER_EMAIL` | Email used by the project owner |
 
----
+For a new database, apply `supabase/migrations/20261019055704_yakkeeper_initial_schema.sql` once. Skip this if that migration is already applied.
 
-## Goals
+```sh
+npm run dev
+```
 
-* Simple and intuitive interface
-* Reliable subtitle support
-* Fast startup and lightweight performance
-* Minimal configuration
-* Clean viewing experience
+Open http://127.0.0.1:3000. Without database configuration, localhost shows a labeled preview. It does not save projects or send requests. Hosted environments show a connection-pending state instead.
 
----
+## Deploy on Vercel
 
-## Planned Features
+1. Import this repository, select Next.js, and use Node.js 22.
+2. Add the four environment variables above in Vercel. Never expose the server secret with a `NEXT_PUBLIC_` prefix.
+3. Enable email-link authentication with email confirmation in Supabase. Set the Site URL to the production origin and allow the exact `/?view=workspace` redirect for production and local testing. Configure SMTP for reliable email delivery.
+4. Deploy and sign in with `OWNER_EMAIL`. The first verified matching account becomes the owner.
+5. Add projects and invite colleagues from the workspace.
 
-* Video playback
-* External subtitle support
-* Automatic subtitle loading
-* Subtitle synchronization tools
-* Keyboard shortcuts
-* Playlist support
-* Watch history
-* Clean modern interface
+## Access
 
----
+Public visitors can browse and submit ideas or contribution requests. Publishers can manage their own projects. The owner manages invitations and can access all project requests.
 
-## Tech Stack
+Application tables have RLS enabled and direct anonymous/authenticated access disabled. Server routes verify Supabase user tokens and check ownership before reads and writes. Invitation codes are hashed and consumed in a database transaction. Public submissions have input validation, origin checks, a honeypot, and a database-backed network rate limit.
 
-* Java
-* JavaFX
-* Git
-* GitHub
+## WhatsApp notifications
 
----
+Set the optional `META_*` and `WHATSAPP_*` values from `.env.example`. Use a supported Meta Graph API version and an approved template with three text parameters: submission kind, project title, and inbox URL. The recipient must opt in.
 
-## Project Status
+Requests are saved before an alert is sent. Meta acceptance is not a delivery receipt. Delivery webhooks, automatic retries, and separate colleague alerts are not included.
 
-🚧 Active Development
+## Checks
 
-Synci is currently being developed as a personal portfolio project.
+```sh
+npm run typecheck
+npm test
+npm run build
+```
 
----
+GitHub Actions runs the same checks. Tests cover API routes with a mock Supabase transport, validation, ownership, inbox privacy, invitations, origin checks, and stale-response protection.
 
-## Vision
+Live database transactions have also checked project updates, invitation activation/expiry/reuse, inbox persistence, and database permissions, with test data rolled back. Full app-to-database login and submission flows, email delivery, Vercel deployment, and WhatsApp delivery still require configured credentials and end-to-end verification.
 
-The best media player is the one you don't have to think about.
-
-Synci aims to provide a distraction-free viewing experience where subtitles work naturally and the interface stays out of the way.
+Project syncing means refreshing data stored in Supabase. GitHub repository import is not included; the Source field links to a repository.
