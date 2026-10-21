@@ -1,0 +1,31 @@
+-- Public GitHub-connected publishing. Existing private records are retained.
+alter table public.yak_profiles add column github_id text unique;
+alter table public.yak_profiles add column github_login text not null default '';
+alter table public.yak_profiles add column avatar_url text not null default '';
+alter table public.yak_profiles add column bio text not null default '';
+alter table public.yak_profiles add column skills text not null default '';
+alter table public.yak_profiles add column availability text not null default '';
+alter table public.yak_profiles add column timezone text not null default 'Asia/Kolkata';
+alter table public.yak_projects add column repo_id bigint unique;
+alter table public.yak_projects add column owner_login text not null default '';
+alter table public.yak_projects add column contributions_open boolean not null default true;
+alter table public.yak_projects add column beginner_friendly boolean not null default true;
+alter table public.yak_projects add column time_commitment text not null default '2–4 hours / week';
+-- Old manually linked listings must be reconnected to a verified repository before republishing.
+update public.yak_projects set visibility='private' where repo_id is null and visibility='public';
+alter table public.yak_projects add constraint public_project_has_repo check(visibility<>'public' or repo_id is not null);
+alter table public.yak_interactions add column applicant_id uuid references auth.users(id);
+alter table public.yak_interactions add column applicant_login text not null default '';
+alter table public.yak_interactions add column project_title text not null default '';
+update public.yak_interactions i set project_title=p.title from public.yak_projects p where p.id=i.project_id;
+create index yak_applications_sent on public.yak_interactions(applicant_id,created_at desc);
+create unique index yak_one_contribution_application on public.yak_interactions(project_id,applicant_id) where kind='contribution' and applicant_id is not null;
+create table public.yak_blocks(id uuid primary key default gen_random_uuid(),owner_id uuid not null references public.yak_profiles(id),blocked_id uuid not null references public.yak_profiles(id),created_at timestamptz not null default now(),unique(owner_id,blocked_id),check(owner_id<>blocked_id));
+create table public.yak_reports(id uuid primary key default gen_random_uuid(),project_id uuid not null references public.yak_projects(id),reporter_id uuid not null references public.yak_profiles(id),reason text not null check(length(reason) between 10 and 1000),status text not null default 'Open' check(status in ('Open','Dismissed','Archived')),created_at timestamptz not null default now());
+create index yak_blocked_user on public.yak_blocks(blocked_id);
+create index yak_report_project on public.yak_reports(project_id);
+create index yak_reporter on public.yak_reports(reporter_id);
+alter table public.yak_blocks enable row level security;
+alter table public.yak_reports enable row level security;
+revoke all on public.yak_blocks,public.yak_reports from anon,authenticated;
+grant all on public.yak_blocks,public.yak_reports to service_role;
