@@ -290,7 +290,12 @@ export async function POST(request: Request) {
         status: "Received",
         notification: "not configured",
       });
-
+      if (
+        !local &&
+        project.owner_id ===
+          (await db.find("yak_profiles", { role: "owner" }))[0]?.id
+      )
+        await notify(saved, project, db);
       return reply({ ok: true });
     }
     if (body.action === "status") {
@@ -362,4 +367,54 @@ export async function POST(request: Request) {
   } catch (e) {
     return failure(e);
   }
+}
+async function notify(record: Row, project: Row, db: ReturnType<typeof store>) {
+  if (
+    !process.env.META_WHATSAPP_TOKEN ||
+    !process.env.META_PHONE_NUMBER_ID ||
+    !process.env.WHATSAPP_TO ||
+    !process.env.WHATSAPP_TEMPLATE ||
+    !/^v\d+\.\d+$/.test(process.env.META_GRAPH_VERSION || "")
+  )
+    return;
+  let notification = "failed";
+  try {
+    const r = await fetch(
+      `https://graph.facebook.com/${process.env.META_GRAPH_VERSION}/${process.env.META_PHONE_NUMBER_ID}/messages`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + process.env.META_WHATSAPP_TOKEN,
+          "Content-Type": "application/json",
+        },
+        signal: AbortSignal.timeout(8000),
+        body: JSON.stringify({
+          messaging_product: "whatsapp",
+          to: process.env.WHATSAPP_TO,
+          type: "template",
+          template: {
+            name: process.env.WHATSAPP_TEMPLATE,
+            language: { code: process.env.WHATSAPP_LANGUAGE || "en_US" },
+            components: [
+              {
+                type: "body",
+                parameters: [
+                  { type: "text", text: String(record.kind) },
+                  { type: "text", text: String(project.title) },
+                  {
+                    type: "text",
+                    text: process.env.APP_URL
+                      ? new URL("/?view=applications", process.env.APP_URL).href
+                      : "YakKeeper inbox",
+                  },
+                ],
+              },
+            ],
+          },
+        }),
+      },
+    );
+    if (r.ok) notification = "accepted by Meta";
+  } catch {}
+  await db.patch("yak_interactions", String(record.id), { notification });
 }
