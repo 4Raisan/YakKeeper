@@ -164,7 +164,7 @@ export async function GET(request: Request) {
     const blocks = user
       ? await db.find("yak_blocks", { owner_id: user.id })
       : [];
-    const reports = [] as Row[];
+    const reports = user?.role === "owner" ? await db.find("yak_reports") : [];
     return reply({
       configured: true,
       mode: local ? "local" : "live",
@@ -319,7 +319,28 @@ export async function POST(request: Request) {
         await db.save("yak_blocks", { owner_id: user.id, blocked_id: blocked });
       return reply({ ok: true });
     }
-
+    if (body.action === "report") {
+      const project_id = z.string().uuid().parse(body.project_id),
+        reason = z.string().trim().min(10).max(1000).parse(body.reason);
+      if (
+        !(
+          await db.find("yak_projects", {
+            id: project_id,
+            visibility: "public",
+          })
+        ).length
+      )
+        throw new HttpError(404, "Project unavailable.");
+      if (!(await db.limit("report:" + user.id)))
+        throw new HttpError(429, "Report limit reached.");
+      await db.save("yak_reports", {
+        project_id,
+        reporter_id: user.id,
+        reason,
+        status: "Open",
+      });
+      return reply({ ok: true });
+    }
 
     throw new HttpError(400, "Unknown action.");
   } catch (e) {
