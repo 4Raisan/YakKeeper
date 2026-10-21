@@ -186,8 +186,26 @@ export async function POST(request: Request) {
       throw new HttpError(403, "Request origin not allowed.");
     const body = await boundedJson(request);
     const local = localEnabled(request);
-
-
+    if (body.action === "demoLogin") {
+      if (!local) throw new HttpError(404, "Local sandbox is disabled.");
+      const token = await demoSession(z.string().uuid().parse(body.user_id));
+      return reply({ ok: true }, 200, {
+        "Set-Cookie": `yk_demo=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=86400`,
+      });
+    }
+    if (body.action === "demoLogout") {
+      if (!local) throw new HttpError(404, "Local sandbox is disabled.");
+      const token = request.headers
+        .get("cookie")
+        ?.split(";")
+        .map((s) => s.trim())
+        .find((s) => s.startsWith("yk_demo="))
+        ?.slice(8);
+      if (token) await store(true).remove("sessions", digest(token));
+      return reply({ ok: true }, 200, {
+        "Set-Cookie": "yk_demo=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0",
+      });
+    }
     if (!local && !configured())
       throw new HttpError(503, "Server configuration is incomplete.");
     const db = store(local),

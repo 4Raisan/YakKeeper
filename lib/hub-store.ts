@@ -139,5 +139,55 @@ export function store(local: boolean): Store {
     },
   };
 }
-export async function demoIdentity(_request:Request):Promise<Row|null>{return null;}
-export async function demoSession(_userId:string):Promise<string>{throw new HttpError(404,"Local sessions are unavailable.");}
+export const demoUsers = [
+  {
+    id: "11111111-1111-4111-8111-111111111111",
+    name: "4Raisan",
+    github_login: "4Raisan",
+    github_id: "demo-raisan",
+    role: "owner",
+  },
+  {
+    id: "22222222-2222-4222-8222-222222222222",
+    name: "Asha · demo",
+    github_login: "asha-demo",
+    github_id: "demo-asha",
+    role: "collaborator",
+  },
+];
+export async function demoSession(userId: string) {
+  const account = demoUsers.find((u) => u.id === userId);
+  if (!account) throw new HttpError(400, "Choose a demo account.");
+  const db = store(true);
+  if (!(await db.find("yak_profiles", { id: userId })).length)
+    await db.save("yak_profiles", {
+      ...account,
+      email: "",
+      avatar_url: "",
+      bio: "Local sandbox account. Not GitHub verified.",
+      skills: "React, TypeScript",
+      availability: "2–4 hours / week",
+      timezone: "Asia/Kolkata",
+      demo: true,
+    });
+  const token = randomBytes(32).toString("hex");
+  await db.save("sessions", {
+    id: digest(token),
+    user_id: userId,
+    expires: Date.now() + 86400000,
+  });
+  return token;
+}
+export async function demoIdentity(request: Request) {
+  const token = request.headers
+    .get("cookie")
+    ?.split(";")
+    .map((s) => s.trim())
+    .find((s) => s.startsWith("yk_demo="))
+    ?.slice(8);
+  if (!token) return null;
+  const db = store(true);
+  const session = (await db.find("sessions", { id: digest(token) }))[0];
+  if (!session || Number(session.expires) < Date.now()) return null;
+  return (await db.find("yak_profiles", { id: session.user_id }))[0] || null;
+}
