@@ -140,7 +140,14 @@ export async function POST(request: Request) {
     const db = store(local),
       user = await identity(request, local);
     if (!user) throw new HttpError(401, "Sign in with GitHub to continue.");
-
+    if (body.action === "profile") {
+      await db.patch(
+        "yak_profiles",
+        user.id,
+        profileSchema.parse(body.profile),
+      );
+      return reply({ ok: true });
+    }
 
 
 

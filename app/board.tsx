@@ -195,7 +195,28 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
       repoAbort.current?.abort();
     }
   }
-  async function action(payload: unknown) { return false; }
+  async function action(payload: unknown) {
+    setBusy(true);
+    setFeedback("");
+    try {
+      const response = await fetch("/api/hub", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(await authHeaders()),
+        },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) throw Error(data.error);
+      return true;
+    } catch (e) {
+      setFeedback((e as Error).message);
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  }
   async function loadRepos(next = 1) { }
   function addProject() { }
   function chooseRepo(repo: Repo) { }
