@@ -1,0 +1,154 @@
+import { z } from "zod";
+import { configured, HttpError, digest } from "../../../lib/supabase-server.ts";
+import {
+  projectSchema,
+  submissionSchema,
+  statusSchema,
+  profileSchema,
+  type Project,
+  type Profile,
+} from "../../../lib/hub-types.ts";
+function sameOrigin(request:Request){return request.headers.get("origin")===new URL(request.url).origin;}
+import {
+  localEnabled,
+  store,
+  demoSession,
+  type Row,
+} from "../../../lib/hub-store.ts";
+import { identity, publicProfile } from "../../../lib/hub-auth.ts";
+import { publicRepos, ownedRepo, github } from "../../../lib/hub-github.ts";
+function sampleRepos(_user:Profile):Repo[]{return [];}
+import type { Repo } from "../../../lib/hub-types.ts";
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+async function boundedJson(request:Request){return request.json();}
+const reply = (
+  value: unknown,
+  status = 200,
+  headers: Record<string, string> = {},
+) =>
+  Response.json(value, {
+    status,
+    headers: { "Cache-Control": "no-store", ...headers },
+  });
+function failure(e: unknown) {
+  if (e instanceof z.ZodError)
+    return reply({ error: e.issues[0]?.message || "Invalid input." }, 400);
+  if (e instanceof HttpError) return reply({ error: e.message }, e.status);
+  if (e instanceof SyntaxError)
+    return reply({ error: "Invalid request." }, 400);
+  console.error(
+    "YakKeeper request failed:",
+    e instanceof Error ? e.message : "unknown",
+  );
+  return reply(
+    { error: "Could not complete the request. Please try again." },
+    500,
+  );
+}
+function application(row: Row) {
+  const {
+    id,
+    project_id,
+    project_title,
+    owner_id,
+    applicant_id,
+    applicant_login,
+    name,
+    kind,
+    message,
+    status,
+    notification,
+    created_at,
+  } = row;
+  return {
+    id,
+    project_id,
+    project_title,
+    owner_id,
+    applicant_id,
+    applicant_login,
+    name,
+    kind,
+    message,
+    status,
+    notification,
+    created_at,
+  };
+}
+export async function GET(request: Request) {
+  try {
+    const local = localEnabled(request);
+    if (!local && !configured())
+      return reply({
+        configured: false,
+        mode: "unconfigured",
+        projects: [],
+        user: null,
+        inbox: [],
+        sent: [],
+        reports: [],
+        blocks: [],
+        hasMore: false,
+      });
+    const db = store(local),
+      user = await identity(request, local),
+      url = new URL(request.url);
+
+    const page = z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(10)
+      .parse(url.searchParams.get("page") || 1);
+    const all = [] as Row[];
+    const mine = [] as Row[];
+    const projects = [
+      ...new Map(
+        [...all.slice(0, page * 24), ...mine].map((p) => [p.id, p]),
+      ).values(),
+    ] as Project[];
+    const inbox = [] as Row[];
+    const sent = [] as Row[];
+    const blocks = [] as Row[];
+    const reports = [] as Row[];
+    return reply({
+      configured: true,
+      mode: local ? "local" : "live",
+      projects,
+      user: user ? publicProfile(user) : null,
+      inbox: inbox.map(application),
+      sent: sent.map(application),
+      reports,
+      blocks: blocks.map((b) => b.blocked_id),
+      hasMore: all.length > page * 24,
+    });
+  } catch (e) {
+    return failure(e);
+  }
+}
+export async function POST(request: Request) {
+  try {
+    if (!sameOrigin(request))
+      throw new HttpError(403, "Request origin not allowed.");
+    const body = await boundedJson(request);
+    const local = localEnabled(request);
+
+
+    if (!local && !configured())
+      throw new HttpError(503, "Server configuration is incomplete.");
+    const db = store(local),
+      user = await identity(request, local);
+    if (!user) throw new HttpError(401, "Sign in with GitHub to continue.");
+
+
+
+
+
+
+
+    throw new HttpError(400, "Unknown action.");
+  } catch (e) {
+    return failure(e);
+  }
+}
