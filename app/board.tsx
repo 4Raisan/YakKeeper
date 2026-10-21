@@ -25,8 +25,7 @@ import {
 import ProjectArt from "./project-art";
 import Github from "./github-icon";
 function latestRequestGate(){return {next:()=>0,current:(_ticket:number)=>true,invalidate:()=>{}};}
-const browserAuth = (): null => null;
-const authHeaders = async (): Promise<Record<string,string>> => ({});
+import { browserAuth, authHeaders } from "@/lib/supabase-browser";
 import {
   blankProject,
   type Project,
@@ -116,7 +115,15 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
   }, []);
   useEffect(() => {
     void refresh();
-    const subscription = null;
+    const auth = browserAuth();
+    const subscription = auth?.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
+        gate.current.invalidate();
+
+        setHub(emptyHub);
+      }
+      setTimeout(() => void refresh(), 0);
+    });
     const onFocus = () => {
       if (!document.hidden) void refresh();
     };
@@ -125,7 +132,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
     const timer: ReturnType<typeof setInterval> | undefined = undefined;
 
     return () => {
-
+      subscription?.data.subscription.unsubscribe();
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onFocus);
       clearInterval(timer);
@@ -189,7 +196,23 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
   function addProject() { }
   function chooseRepo(repo: Repo) { }
   function edit(project: Project) { }
-  async function signIn() { }
+  async function signIn() {
+    setBusy(true);
+    setFeedback("");
+    try {
+      const auth = browserAuth();
+      if (!auth) throw Error("GitHub sign-in is not configured yet.");
+      const { error } = await auth.auth.signInWithOAuth({
+        provider: "github",
+        options: { redirectTo: location.origin + "/?view=my" },
+      });
+      if (error) throw error;
+    } catch (e) {
+      setFeedback((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
   async function signOut() { }
   function request(project: Project, kind: "idea" | "contribution") { }
   const user = hub.user;
