@@ -30,7 +30,11 @@ export function store(local: boolean): Store {
       async remove(table, id) {
         check(await db.from(table).delete().eq("id", id));
       },
-      async limit(_id:string) { return true; },
+      async limit(id) {
+        return Boolean(
+          check(await db.rpc("yak_limit_submission", { p_id: digest(id) })),
+        );
+      },
     };
   }
  throw new HttpError(503,"Local storage is unavailable.");

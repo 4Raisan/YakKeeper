@@ -257,7 +257,8 @@ export async function POST(request: Request) {
       if (!project.contributions_open || project.status !== "In progress")
         throw new HttpError(409, "This project is not accepting requests.");
 
-
+      if (!(await db.limit("submit:" + user.id)))
+        throw new HttpError(429, "Hourly request limit reached.");
       const saved = await db.save("yak_interactions", {
         project_id: project.id,
         project_title: project.title,
