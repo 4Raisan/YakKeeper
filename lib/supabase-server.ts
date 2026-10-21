@@ -26,4 +26,18 @@ export class HttpError extends Error {
 export function digest(value: string) {
   return createHash("sha256").update(value).digest("hex");
 }
-export function check<T>(result:{data:T;error:unknown}):T{if(result.error)throw new HttpError(503,"Database request failed.");return result.data;}
+export function check<T>(result: { data: T; error: unknown }): T {
+  if (result.error) {
+    const code = (result.error as { code?: string }).code;
+    if (code === "23505")
+      throw new HttpError(
+        409,
+        "This repository or application is already listed.",
+      );
+    throw new HttpError(
+      503,
+      "Database unavailable or schema upgrade required.",
+    );
+  }
+  return result.data;
+}
