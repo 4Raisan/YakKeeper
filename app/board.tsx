@@ -103,13 +103,30 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
       if (gate.current.current(ticket)) setLoading(false);
     }
   }, [page]);
+  useEffect(() => {
+    const wanted = new URLSearchParams(location.search).get("view");
+    if (wanted && views.includes(wanted)) setView(wanted);
+    const authError = new URLSearchParams(location.search).get(
+      "error_description",
+    );
+    if (authError) {
+      setFeedback(authError);
+      setModal("login");
+    }
+  }, []);
   useEffect(() => {}, []);
   useEffect(() => {}, []);
   useEffect(() => {}, []);
   useEffect(() => {}, []);
   useEffect(() => {}, []);
-  useEffect(() => {}, []);
-  function navigate(next: string) { }
+  function navigate(next: string) {
+    setView(next);
+    setQuery("");
+    setFilter("All projects");
+    setForm(null);
+    setFeedback("");
+    history.replaceState(null, "", next === "explore" ? "/" : "/?view=" + next);
+  }
   function open(next: string) { }
   function close() { }
   async function action(payload: unknown) { return false; }
@@ -121,7 +138,24 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
   async function signOut() { }
   function request(project: Project, kind: "idea" | "contribution") { }
   const user = hub.user;
-  const list = hub.projects;
+  const list = hub.projects
+    .filter((p) =>
+      view === "my" ? p.owner_id === user?.id : p.visibility === "public",
+    )
+    .filter((p) =>
+      `${p.title} ${p.tags} ${p.needs} ${p.owner_login} ${p.summary}`
+        .toLowerCase()
+        .includes(query.toLowerCase()),
+    )
+    .filter(
+      (p) =>
+        filter === "All projects" ||
+        (filter === "Open to teammates" &&
+          p.contributions_open &&
+          p.status === "In progress") ||
+        (filter === "Beginner friendly" && p.beginner_friendly) ||
+        p.status === filter,
+    );
   const requests = applicationTab === "received" ? hub.inbox : hub.sent;
   const title =
     view === "my"
