@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import ProjectArt from "./project-art";
 import Github from "./github-icon";
-function latestRequestGate(){return {next:()=>0,current:(_ticket:number)=>true,invalidate:()=>{}};}
+import { latestRequestGate } from "@/lib/hub-sync";
 import { browserAuth, authHeaders } from "@/lib/supabase-browser";
 import {
   blankProject,
@@ -80,7 +80,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
     channel = useRef<BroadcastChannel | null>(null);
   const refresh = useCallback(async () => {
     const ticket = gate.current.next();
-
+    readAbort.current?.abort();
     const abort = new AbortController();
     readAbort.current = abort;
     try {
@@ -119,7 +119,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
     const subscription = auth?.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_OUT") {
         gate.current.invalidate();
-
+        readAbort.current?.abort();
         setHub(emptyHub);
       }
       setTimeout(() => void refresh(), 0);
@@ -141,7 +141,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
       clearInterval(timer);
       channel.current?.close();
       gate.current.invalidate();
-
+      readAbort.current?.abort();
     };
   }, [refresh]);
   useEffect(() => {
@@ -305,7 +305,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
   }
   async function signOut() {
     gate.current.invalidate();
-
+    readAbort.current?.abort();
     setHub({ ...emptyHub, mode: hub.mode, configured: hub.configured });
     setForm(null);
     setModal("");
@@ -1097,7 +1097,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
                         key={id}
                         onClick={async () => {
                           gate.current.invalidate();
-
+                          readAbort.current?.abort();
                           setForm(null);
                           setRepos([]);
                           if (
