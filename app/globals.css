@@ -49,3 +49,26 @@ nav button{font-size:16px}nav button>span{font-size:12px}
  .send-row{flex-wrap:wrap;gap:14px}.send-row small{font-size:12px;max-width:100%}
  .request-meta{font-size:12px;flex-wrap:wrap}.board-end,footer{font-size:10px}.board-end{letter-spacing:.5px}
 }
+
+
+/* Project gallery: two cards per row, stacked on small screens. */
+.project-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;padding-top:24px;align-items:start}
+.project-list>.project{margin:0;min-width:0;height:100%;display:flex;flex-direction:column}
+.project-list .project-row{display:flex;flex-direction:column;align-items:stretch;gap:22px;padding:20px;flex:1}
+.project-list .project-mark{width:100%;height:230px;min-height:0;flex-shrink:0}
+.project-list .project-art{min-height:0}
+.project-list .project-content{align-self:stretch;flex:1;overflow-wrap:anywhere}
+.project-list .project-title{font-size:30px;overflow-wrap:anywhere;text-align:left}
+.project-list .summary{max-width:none;line-height:1.65}
+.project-list .project-actions{flex-direction:row;align-self:stretch;padding:0;margin-top:auto;flex-wrap:wrap}
+.project-list .project-actions .small-button{flex:1}
+.project-list .project-details{margin:0 20px 24px;max-width:none;overflow-wrap:anywhere}
+.project-list>.empty{grid-column:1/-1}
+.project-list .project-links{flex-wrap:wrap}
+@media(max-width:760px){
+ .project-list{grid-template-columns:minmax(0,1fr);gap:20px;padding-top:18px}
+ .project-list .project-row{padding:16px;gap:20px}
+ .project-list .project-mark{height:210px}
+ .project-list .project-title{font-size:29px}
+ .project-list .project-details{margin-inline:16px}
+}
