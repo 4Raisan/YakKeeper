@@ -101,8 +101,14 @@ export async function GET(request: Request) {
       .min(1)
       .max(10)
       .parse(url.searchParams.get("page") || 1);
-    const all = [] as Row[];
-    const mine = [] as Row[];
+    const all = await db.find(
+      "yak_projects",
+      { visibility: "public" },
+      page * 24 + 1,
+    );
+    const mine = user
+      ? await db.find("yak_projects", { owner_id: user.id })
+      : [];
     const projects = [
       ...new Map(
         [...all.slice(0, page * 24), ...mine].map((p) => [p.id, p]),
