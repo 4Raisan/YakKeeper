@@ -1,0 +1,17 @@
+node_modules/
+.next/
+.vercel/
+.env*
+!.env.example
+*.tsbuildinfo
+next-env.d.ts
+coverage/
+*.log
+.DS_Store
+
+.local/
+supabase/.temp/
+# Local planning and account metadata; not release source.
+/AGENTS.md
+/docs/commit-plan.md
+/supabase/project.json
