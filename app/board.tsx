@@ -134,8 +134,35 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
 
     };
   }, [refresh]);
-  useEffect(() => {}, []);
-  useEffect(() => {}, []);
+  useEffect(() => {
+    if (!modal) return;
+    const prior = document.activeElement as HTMLElement,
+      overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    dialog.current
+      ?.querySelector<HTMLElement>("input,button,textarea")
+      ?.focus();
+    return () => {
+      document.body.style.overflow = overflow;
+      prior?.focus();
+    };
+  }, [modal]);
+  useEffect(() => {
+    const shortcut = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement;
+      if (
+        e.key === "/" &&
+        !modal &&
+        !["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName) &&
+        !el.isContentEditable
+      ) {
+        e.preventDefault();
+        searchInput.current?.focus();
+      }
+    };
+    document.addEventListener("keydown", shortcut);
+    return () => document.removeEventListener("keydown", shortcut);
+  }, [modal]);
   useEffect(() => {}, []);
   useEffect(() => {}, []);
   function navigate(next: string) {
@@ -146,8 +173,17 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
     setFeedback("");
     history.replaceState(null, "", next === "explore" ? "/" : "/?view=" + next);
   }
-  function open(next: string) { }
-  function close() { }
+  function open(next: string) {
+    setFeedback("");
+    setModal(next);
+  }
+  function close() {
+    if (!busy) {
+      setModal("");
+      setFeedback("");
+      repoAbort.current?.abort();
+    }
+  }
   async function action(payload: unknown) { return false; }
   async function loadRepos(next = 1) { }
   function addProject() { }
