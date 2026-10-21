@@ -470,7 +470,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
                         className="project-title"
                         aria-expanded={expanded === p.id}
                         onClick={() =>
-                          setExpanded("")
+                          setExpanded(expanded === p.id ? "" : p.id)
                         }
                       >
                         {p.title}
