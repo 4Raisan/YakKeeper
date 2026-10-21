@@ -155,8 +155,12 @@ export async function GET(request: Request) {
         [...all.slice(0, page * 24), ...mine].map((p) => [p.id, p]),
       ).values(),
     ] as Project[];
-    const inbox = [] as Row[];
-    const sent = [] as Row[];
+    const inbox = user
+      ? await db.find("yak_interactions", { owner_id: user.id })
+      : [];
+    const sent = user
+      ? await db.find("yak_interactions", { applicant_id: user.id })
+      : [];
     const blocks = [] as Row[];
     const reports = [] as Row[];
     return reply({

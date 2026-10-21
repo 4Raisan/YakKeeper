@@ -351,7 +351,68 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
           : view === "moderation"
             ? "Reports"
             : "Build together";
-  function requestCard(r: HubRequest) { return null; }
+  function requestCard(r: HubRequest) {
+    const received = applicationTab === "received";
+    return (
+      <article className="request" key={r.id}>
+        <div className="request-meta">
+          <span>{r.kind.toUpperCase()}</span>
+          <span>{r.project_title}</span>
+          <time>{new Date(r.created_at).toLocaleDateString()}</time>
+        </div>
+        <div className="request-title">
+          <strong>{received ? r.name : r.project_title}</strong>
+          {r.applicant_login && !r.applicant_login.endsWith("-demo") && (
+            <a
+              href={"https://github.com/" + r.applicant_login}
+              target="_blank"
+              rel="noreferrer"
+            >
+              @{r.applicant_login}
+              <ArrowUpRight size={12} />
+            </a>
+          )}
+        </div>
+        <p className="pre-wrap">{r.message}</p>
+        <div className="request-bottom">
+          {received ? (
+            <>
+              <select
+                disabled={busy}
+                aria-label={"Status for " + r.name}
+                value={r.status}
+                onChange={(e) =>
+                  Promise.resolve(false)
+                }
+              >
+                {["Received", "Reviewing", "Accepted", "Declined"].map((s) => (
+                  <option key={s}>{s}</option>
+                ))}
+              </select>
+              <button
+                disabled={busy}
+                className="text-button"
+                onClick={() =>
+                  Promise.resolve(false)
+                }
+              >
+                {hub.blocks.includes(r.applicant_id) ? "Unblock" : "Block"}{" "}
+                applicant
+              </button>
+            </>
+          ) : (
+            <span className="status">{r.status}</span>
+          )}
+        </div>
+        {r.status === "Accepted" && (
+          <small>
+            Connect through GitHub to agree next steps. Repository access is
+            managed separately.
+          </small>
+        )}
+      </article>
+    );
+  }
   return (
     <div className="app">
       <header>
