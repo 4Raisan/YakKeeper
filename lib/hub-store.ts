@@ -11,7 +11,19 @@ export type Store = {
   remove: (table: string, id: string) => Promise<void>;
   limit: (id: string) => Promise<boolean>;
 };
-export function localEnabled(_request:Request){return false;}
+export function localEnabled(request: Request) {
+  const url = new URL(request.url);
+  return (
+    process.env.YAKKEEPER_LOCAL_DEMO === "true" &&
+    !process.env.VERCEL &&
+    !process.env.RENDER &&
+    !process.env.RAILWAY_ENVIRONMENT &&
+    ["127.0.0.1", "localhost"].includes(url.hostname) &&
+    ["127.0.0.1", "localhost"].includes(
+      (request.headers.get("host") || url.host).split(":")[0],
+    )
+  );
+}
 const connections = new Map<string, DatabaseSync>();
 export function localDatabase() {
   const filename = path.resolve(

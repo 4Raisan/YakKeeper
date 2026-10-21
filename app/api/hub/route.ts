@@ -17,7 +17,7 @@ import {
 } from "../../../lib/hub-store.ts";
 import { identity, publicProfile } from "../../../lib/hub-auth.ts";
 import { publicRepos, ownedRepo, github } from "../../../lib/hub-github.ts";
-function sampleRepos(_user:Profile):Repo[]{return [];}
+import { sampleRepos } from "../../../lib/hub-demo.ts";
 import type { Repo } from "../../../lib/hub-types.ts";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
