@@ -769,7 +769,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
                         {p.tags.split(",").filter(Boolean).join(" / ") ||
                           p.category}
                       </span>
-                      <span>by @{p.owner_login}</span>
+                      <a className="project-owner" href={"https://github.com/" + p.owner_login} target="_blank" rel="noreferrer" aria-label={"View @" + p.owner_login + " on GitHub"}><Github size={14} />@{p.owner_login}</a>
                       {p.needs && (
                         <span className="needs">
                           <GitBranch size={12} />
