@@ -212,7 +212,8 @@ export async function POST(request: Request) {
         )[0];
         if (!existing || existing.owner_id !== user.id)
           throw new HttpError(403, "You can only edit your own projects.");
-
+        if (existing.moderated && input.visibility === "public")
+          throw new HttpError(403, "This listing was archived by a moderator.");
         if (existing.repo_id !== input.repo_id)
           throw new HttpError(
             400,
@@ -341,7 +342,22 @@ export async function POST(request: Request) {
       });
       return reply({ ok: true });
     }
-
+    if (body.action === "moderate") {
+      if (user.role !== "owner")
+        throw new HttpError(403, "Administrator access required.");
+      const report = (
+        await db.find("yak_reports", { id: z.string().uuid().parse(body.id) })
+      )[0];
+      if (!report) throw new HttpError(404, "Report not found.");
+      const decision = z.enum(["Dismissed", "Archived"]).parse(body.decision);
+      if (decision === "Archived")
+        await db.patch("yak_projects", String(report.project_id), {
+          visibility: "archived",
+          moderated: true,
+        });
+      await db.patch("yak_reports", String(report.id), { status: decision });
+      return reply({ ok: true });
+    }
     throw new HttpError(400, "Unknown action.");
   } catch (e) {
     return failure(e);
