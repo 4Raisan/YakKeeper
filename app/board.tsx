@@ -382,7 +382,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
                 aria-label={"Status for " + r.name}
                 value={r.status}
                 onChange={(e) =>
-                  Promise.resolve(false)
+                  action({ action: "status", id: r.id, status: e.target.value })
                 }
               >
                 {["Received", "Reviewing", "Accepted", "Declined"].map((s) => (

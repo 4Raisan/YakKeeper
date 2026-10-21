@@ -279,7 +279,22 @@ export async function POST(request: Request) {
 
       return reply({ ok: true });
     }
-
+    if (body.action === "status") {
+      const record = (
+        await db.find("yak_interactions", {
+          id: z.string().uuid().parse(body.id),
+        })
+      )[0];
+      if (!record || record.owner_id !== user.id)
+        throw new HttpError(
+          403,
+          "Only this project’s owner can review the application.",
+        );
+      await db.patch("yak_interactions", String(record.id), {
+        status: statusSchema.parse(body.status),
+      });
+      return reply({ ok: true });
+    }
 
 
 
