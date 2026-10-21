@@ -94,7 +94,31 @@ export async function GET(request: Request) {
     const db = store(local),
       user = await identity(request, local),
       url = new URL(request.url);
-
+    if (url.searchParams.get("resource") === "repos") {
+      if (!user) throw new HttpError(401, "Sign in with GitHub first.");
+      const page = z.coerce
+        .number()
+        .int()
+        .min(1)
+        .max(100)
+        .parse(url.searchParams.get("page") || 1);
+      let repos: Repo[] = [];
+      let warning = "";
+      try {
+        repos = await publicRepos(user.github_login, page);
+      } catch (e) {
+        if (!local) throw e;
+        warning =
+          "GitHub is unavailable. The sandbox example is still available.";
+      }
+      const visible = repos.filter((r) => !r.archived);
+      return reply({
+        repos:
+          local && page === 1 ? [...sampleRepos(user), ...visible] : visible,
+        hasMore: repos.length === 30,
+        warning,
+      });
+    }
     const page = z.coerce
       .number()
       .int()

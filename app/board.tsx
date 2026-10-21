@@ -175,7 +175,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
     setForm(null);
     setRepos([]);
   }, [hub.user?.id]);
-  useEffect(() => {}, []);
+  useEffect(() => () => repoAbort.current?.abort(), []);
   function navigate(next: string) {
     setView(next);
     setQuery("");
@@ -217,8 +217,43 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
       setBusy(false);
     }
   }
-  async function loadRepos(next = 1) { }
-  function addProject() { }
+  async function loadRepos(next = 1) {
+    repoAbort.current?.abort();
+    const abort = new AbortController();
+    repoAbort.current = abort;
+    setRepoLoading(true);
+    setRepoError("");
+    try {
+      const response = await fetch("/api/hub?resource=repos&page=" + next, {
+        headers: await authHeaders(),
+        signal: abort.signal,
+      });
+      const data = await response.json();
+      if (!response.ok) throw Error(data.error);
+      if (!abort.signal.aborted) {
+        setRepos((previous) =>
+          next === 1 ? data.repos : [...previous, ...data.repos],
+        );
+        setRepoPage(next);
+        setMoreRepos(data.hasMore);
+        setRepoError(data.warning || "");
+      }
+    } catch (e) {
+      if (!abort.signal.aborted) setRepoError((e as Error).message);
+    } finally {
+      if (!abort.signal.aborted) setRepoLoading(false);
+    }
+  }
+  function addProject() {
+    if (!hub.user) {
+      open("login");
+      return;
+    }
+    setRepos([]);
+    setRepoQuery("");
+    open("repos");
+    void loadRepos();
+  }
   function chooseRepo(repo: Repo) { }
   function edit(project: Project) { }
   async function signIn() {
