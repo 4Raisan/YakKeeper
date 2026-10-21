@@ -480,18 +480,18 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
             </button>
           </div>
         )}
-        <section className="board-heading"><div className="overline">A place for your next collaboration<span className="heading-line" /></div>
+        <section className="board-heading">
           <div className="title-line">
             <h1>
               {title}
               <span>.</span>
             </h1>
             <p>
-              Where projects meet<br />their next contributors.
+              Where projects meet their next contributors.
             </p>
           </div>
 
-        {view === "explore" && <p className="board-intro">Find a project. Bring your skills. Build something with someone.</p>}</section>
+        </section>
         <div className="board-toolbar">
           <nav aria-label="Project sections">
             {[

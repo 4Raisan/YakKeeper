@@ -72,3 +72,41 @@ nav button{font-size:16px}nav button>span{font-size:12px}
  .project-list .project-title{font-size:29px}
  .project-list .project-details{margin-inline:16px}
 }
+
+
+/* Keep discovery and complete project cards in the first screen. */
+header{height:72px}
+.board-heading{padding:24px 0 20px}
+.board-heading .title-line{margin:0;align-items:center;gap:20px}
+.board-heading .title-line h1{font-size:38px;letter-spacing:-1.8px;line-height:1.15}
+.board-heading .title-line>p{font-size:16px;border:0;padding:0;margin:0;max-width:380px}
+.board-toolbar{min-height:54px}
+nav button{padding-bottom:14px}.filters{margin-bottom:10px}
+.sandbox-bar{padding:9px 0}
+.project-list{padding-top:18px;gap:22px}
+.project-list .project-row{padding:18px;gap:16px}
+.project-list .project-mark{height:120px}
+.project-list .project-art{padding:12px 16px}
+.project-list .art-symbol{inset:0 0 auto;height:100%;width:100%}
+.project-list .art-bottom strong{font-size:20px}
+.project-list .project-title{font-size:28px}
+.project-list .project-title-line{margin-bottom:10px}
+.project-list .summary{margin-bottom:12px}
+.project-list .project-meta{gap:8px 12px}
+.project-list .project-badges{margin-top:12px}
+.project-list .project-actions{padding-top:2px}
+.project-list .project-actions .small-button{padding:10px 14px}
+.profile-panel{max-width:760px;padding-top:24px}
+.profile-panel label{font-size:14px}.profile-identity{margin-bottom:18px}
+@media(max-width:760px){
+ .board-heading{padding:20px 0 16px}
+ .board-heading .title-line{align-items:flex-start;flex-direction:column;gap:7px}
+ .board-heading .title-line h1{font-size:32px;letter-spacing:-1.3px}
+ .board-heading .title-line>p{display:block;font-size:14px;line-height:1.5;max-width:none}
+ .project-list .project-mark{height:110px}
+ .project-list .project-row{padding:16px;gap:14px}
+ .project-list .project-title{font-size:27px}
+ .project-list .summary{line-height:1.55}
+ .project-list .project-badges{gap:6px}
+ .board-end{margin-top:22px}
+}
