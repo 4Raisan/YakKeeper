@@ -130,7 +130,10 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onFocus);
     const timer = setInterval(onFocus, 60000);
-
+    if (typeof BroadcastChannel !== "undefined") {
+      channel.current = new BroadcastChannel("yakkeeper-sync");
+      channel.current.onmessage = () => void refresh();
+    }
     return () => {
       subscription?.data.subscription.unsubscribe();
       window.removeEventListener("focus", onFocus);
@@ -210,6 +213,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
       const data = await response.json();
       if (!response.ok) throw Error(data.error);
       await refresh();
+      channel.current?.postMessage("changed");
       return true;
     } catch (e) {
       setFeedback((e as Error).message);
@@ -311,6 +315,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
       await browserAuth()?.auth.signOut();
       await refresh();
     }
+    channel.current?.postMessage("changed");
     navigate("explore");
   }
   function request(project: Project, kind: "idea" | "contribution") {
