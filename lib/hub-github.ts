@@ -9,7 +9,7 @@ export async function github<T>(path: string, fresh = false): Promise<T> {
   )
     throw new HttpError(400, "Invalid GitHub resource.");
   const hit = cache.get(path);
-
+  if (!fresh && hit && hit.expires > Date.now()) return hit.value as T;
   const response = await fetch("https://api.github.com" + path, {
     headers: {
       Accept: "application/vnd.github+json",
