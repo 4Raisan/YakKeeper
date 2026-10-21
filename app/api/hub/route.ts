@@ -8,7 +8,7 @@ import {
   type Project,
   type Profile,
 } from "../../../lib/hub-types.ts";
-function sameOrigin(request:Request){return request.headers.get("origin")===new URL(request.url).origin;}
+import { sameOrigin } from "../../../lib/hub-security.ts";
 import {
   localEnabled,
   store,
@@ -21,7 +21,24 @@ function sampleRepos(_user:Profile):Repo[]{return [];}
 import type { Repo } from "../../../lib/hub-types.ts";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-async function boundedJson(request:Request){return request.json();}
+async function boundedJson(request: Request) {
+  if (Number(request.headers.get("content-length") || 0) > 24000)
+    throw new HttpError(413, "Request too large.");
+  const reader = request.body?.getReader();
+  if (!reader) throw new HttpError(400, "Missing request body.");
+  const decoder = new TextDecoder();
+  let size = 0, text = "";
+  try {
+    for (;;) {
+      const chunk = await reader.read();
+      if (chunk.done) break;
+      size += chunk.value.byteLength;
+      if (size > 24000) { await reader.cancel(); throw new HttpError(413, "Request too large."); }
+      text += decoder.decode(chunk.value, {stream: true});
+    }
+    return JSON.parse(text + decoder.decode());
+  } finally { reader.releaseLock(); }
+}
 const reply = (
   value: unknown,
   status = 200,
