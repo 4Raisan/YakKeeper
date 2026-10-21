@@ -114,7 +114,26 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
       setModal("login");
     }
   }, []);
-  useEffect(() => {}, []);
+  useEffect(() => {
+    void refresh();
+    const subscription = null;
+    const onFocus = () => {
+      if (!document.hidden) void refresh();
+    };
+
+
+    const timer: ReturnType<typeof setInterval> | undefined = undefined;
+
+    return () => {
+
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
+      clearInterval(timer);
+      channel.current?.close();
+      gate.current.invalidate();
+
+    };
+  }, [refresh]);
   useEffect(() => {}, []);
   useEffect(() => {}, []);
   useEffect(() => {}, []);
