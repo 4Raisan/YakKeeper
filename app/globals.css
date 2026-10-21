@@ -23,3 +23,29 @@
 @media(max-width:650px){.brand .brand-logo{width:38px;height:38px}.yak-art .yak-project-logo{padding:8px 12px 34px}}
 @media(max-width:1050px){.title-line h1{font-size:56px}}
 @media(max-width:650px){.title-line h1{font-size:43.4px}.sandbox-bar{font-size:8px;line-height:1.7}.sandbox-bar span:nth-child(2){max-width:240px}.board-intro{font-size:13px}.header-right .sign-in{font-size:0;gap:0;padding:9px}.header-right .sign-in svg{width:17px}.brand{gap:6px!important;font-size:20px!important}.header-right{margin-left:auto}.project-badges span{font-size:8px}.profile-panel{padding-top:20px}.board-end{font-size:7px}.modal-heading h2{font-size:21px}.repo-option{padding-inline:0}}
+/* Readable UI typography across desktop and mobile. */
+body{font-size:16px}
+.header-description{font-size:12px}.sign-in,.user-name,.button,.small-button,.text-button{font-size:14px}
+.overline{font-size:12px}.title-line>p,.board-intro{font-size:18px}
+nav button{font-size:16px}nav button>span{font-size:12px}
+.search input{font-size:14px;width:170px}.search kbd,.filter select{font-size:13px}
+.summary{font-size:17px}.project-meta{font-size:12px}.status,.visibility,.preview-label{font-size:12px}
+.project-badges span{font-size:12px}.project-links a,.project-links button{font-size:14px}
+.project-details,.request p,.login-panel>p{font-size:16px}.roadmap{font-size:14px}.roadmap>span{font-size:12px}
+.inline-title h2,.request-title strong{font-size:18px}
+.send-row small,.request-meta,.request-bottom small,.notification-state,.demo-accounts>span,.repo-option em{font-size:12px}
+.feedback,.alert,.request-title a,.request-bottom select,.modal-note,.application-as,.connected-repo,.demo-accounts p,.modal .checkbox-row{font-size:14px}
+.sandbox-bar,.setup-strip,.board-end,footer{font-size:12px}
+.modal input,.modal textarea,.modal select,.profile-panel input,.profile-panel textarea{font-size:16px}
+.modal label{font-size:14px}.modal .setup-note{font-size:14px!important}.repo-option small,.login-panel>small{font-size:14px}
+.application-tabs span{font-size:13px}
+@media(max-width:1050px){.toolbar{flex-wrap:wrap;row-gap:20px}.summary{font-size:16px}}
+@media(max-width:650px){
+ .header-right .button,.project-actions .small-button{font-size:14px}
+ .overline{font-size:11px;letter-spacing:1px}.board-intro{font-size:16px;line-height:1.6}
+ nav button{font-size:14px}.search input{font-size:16px;width:100%}.filter select{font-size:13px;max-width:125px}
+ .summary,.project-details{font-size:16px}.project-meta,.project-badges span,.status{font-size:11px}
+ .sandbox-bar{font-size:11px;align-items:flex-start;line-height:1.6}.sandbox-bar button{flex-shrink:0}.sandbox-bar span:nth-child(2){max-width:none}
+ .send-row{flex-wrap:wrap;gap:14px}.send-row small{font-size:12px;max-width:100%}
+ .request-meta{font-size:12px;flex-wrap:wrap}.board-end,footer{font-size:10px}.board-end{letter-spacing:.5px}
+}
