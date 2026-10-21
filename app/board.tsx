@@ -254,7 +254,23 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
     open("repos");
     void loadRepos();
   }
-  function chooseRepo(repo: Repo) { }
+  function chooseRepo(repo: Repo) {
+    setEditor({
+      ...blankProject,
+      repo_id: repo.id,
+      title: repo.name,
+      summary: repo.description || "",
+      description: repo.description || "",
+      tags: repo.language || "",
+      demo:
+        repo.homepage && /^https?:\/\//.test(repo.homepage)
+          ? repo.homepage
+          : "",
+    });
+    setRepoLabel(repo.full_name);
+    setEditing("");
+    open("editor");
+  }
   function edit(project: Project) { }
   async function signIn() {
     setBusy(true);

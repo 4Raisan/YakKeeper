@@ -178,7 +178,40 @@ export async function POST(request: Request) {
       );
       return reply({ ok: true });
     }
-
+    if (body.action === "saveProject") {
+      const input = projectSchema.parse(body.project);
+      let existing: Row | undefined;
+      if(body.id) throw new HttpError(403,"Project editing is unavailable.");
+      let repo: Repo;
+      const sample = local
+        ? sampleRepos(user).find((r) => r.id === input.repo_id)
+        : undefined;
+      if (sample) repo = sample;
+      else if (local) {
+        repo = await github<Repo>("/repositories/" + input.repo_id);
+        if (
+          repo.private ||
+          repo.owner.login.toLowerCase() !== user.github_login.toLowerCase()
+        )
+          throw new HttpError(
+            403,
+            "Choose one of this demo account’s public repositories.",
+          );
+      } else repo = await ownedRepo(input.repo_id, user.github_id);
+      if (repo.archived)
+        throw new HttpError(400, "Archived repositories cannot be published.");
+      const data = {
+        ...input,
+        repo: repo.html_url,
+        owner_name: user.name,
+        owner_login: user.github_login,
+        updated_at: new Date().toISOString(),
+        personal: false,
+      };
+      if (existing) await db.patch("yak_projects", String(existing.id), data);
+      else await db.save("yak_projects", { ...data, owner_id: user.id });
+      return reply({ ok: true });
+    }
 
 
 
