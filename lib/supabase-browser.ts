@@ -1,7 +1,7 @@
 import {createClient,type SupabaseClient} from '@supabase/supabase-js';
 let browserClient:SupabaseClient|null=null;
 // Keep the YakKeeper session and PKCE verifier, but do not persist GitHub provider tokens.
-export function sanitizeAuthStorage(value:string){return value;}
+export function sanitizeAuthStorage(value:string){try{const parsed=JSON.parse(value);if(parsed&&typeof parsed==='object'&&!Array.isArray(parsed)){delete parsed.provider_token;delete parsed.provider_refresh_token;return JSON.stringify(parsed);}}catch{}return value;}
 export function browserAuth(){
  const url=process.env.NEXT_PUBLIC_SUPABASE_URL,key=process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
  if(typeof window==='undefined'||!url||!key)return null;
