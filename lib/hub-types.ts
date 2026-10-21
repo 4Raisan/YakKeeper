@@ -96,19 +96,30 @@ export const blankProject = {
   beginner_friendly: true,
   time_commitment: "2–4 hours / week",
 };
-const url=z.string();
+const url = z
+  .string()
+  .trim()
+  .max(500)
+  .refine((v) => {
+    if (!v) return true;
+    try {
+      return ["http:", "https:"].includes(new URL(v).protocol);
+    } catch {
+      return false;
+    }
+  }, "Use an HTTP(S) URL.");
 export const projectSchema = z.object({
   repo_id: z.number().int().positive(),
   title: z.string().trim().min(1).max(120),
   summary: z.string().trim().min(10).max(240),
   description: z.string().trim().min(20).max(10000),
   category: z.enum(["Web apps", "AI & research", "Tools", "Design", "Other"]),
-  status: z.enum(["In progress", "Completed", "Paused"]),
+  status: z.literal("In progress"),
   tags: z.string().trim().max(200),
   needs: z.string().trim().min(3).max(1000),
   roadmap: z.string().trim().max(3000),
   demo: url,
-  visibility: z.enum(["public", "private", "archived"]),
+  visibility: z.literal("public"),
   contributions_open: z.boolean(),
   beginner_friendly: z.boolean(),
   time_commitment: z.string().trim().min(1).max(100),

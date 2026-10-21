@@ -1,0 +1,63 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import {
+  projectSchema,
+  submissionSchema,
+  blankProject,
+} from "../lib/hub-types.ts";
+const valid = {
+  ...blankProject,
+  repo_id: 123,
+  title: "YakKeeper",
+  summary: "A shared project collaboration board.",
+  description: "Find teammates and build public projects together.",
+  needs: "Frontend",
+};
+test("project links reject executable or malformed URLs", () => {
+  for (const demo of [
+    "javascript:alert(1)",
+    "data:text/html,test",
+    "//example.com",
+    "https://",
+    "file:///secret",
+  ])
+    assert.equal(projectSchema.safeParse({ ...valid, demo }).success, false);
+  for (const demo of ["", "https://example.com", "http://localhost:3000"])
+    assert.equal(projectSchema.safeParse({ ...valid, demo }).success, true);
+});
+test("publishing requires a repository and bounded valid project fields", () => {
+  assert.equal(projectSchema.safeParse(valid).success, true);
+  for (const change of [
+    { repo_id: 0 },
+    { repo_id: -1 },
+    { title: "x".repeat(121) },
+    { visibility: "admin" },
+    { status: "unknown" },
+    { needs: "" },
+    { contributions_open: "yes" },
+  ])
+    assert.equal(
+      projectSchema.safeParse({ ...valid, ...change }).success,
+      false,
+    );
+});
+test("applications use server identity and validate message/honeypot", () => {
+  const value = {
+    project_id: "1cb487fd-c7bf-491c-9412-bde2affc704a",
+    kind: "contribution",
+    message: "I can help build the React frontend each weekend.",
+    website: "",
+  };
+  assert.equal(submissionSchema.safeParse(value).success, true);
+  for (const change of [
+    { project_id: "preview" },
+    { message: "short" },
+    { website: "spam" },
+    { kind: "admin" },
+    { message: "x".repeat(4001) },
+  ])
+    assert.equal(
+      submissionSchema.safeParse({ ...value, ...change }).success,
+      false,
+    );
+});
