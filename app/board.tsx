@@ -170,7 +170,11 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
     document.addEventListener("keydown", shortcut);
     return () => document.removeEventListener("keydown", shortcut);
   }, [modal]);
-  useEffect(() => {}, []);
+  useEffect(() => {
+    setApplicationTab("received");
+    setForm(null);
+    setRepos([]);
+  }, [hub.user?.id]);
   useEffect(() => {}, []);
   function navigate(next: string) {
     setView(next);
@@ -213,7 +217,20 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
       setBusy(false);
     }
   }
-  async function signOut() { }
+  async function signOut() {
+    gate.current.invalidate();
+
+    setHub({ ...emptyHub, mode: hub.mode, configured: hub.configured });
+    setForm(null);
+    setModal("");
+    setRepos([]);
+    if (hub.mode === "local") await action({ action: "demoLogout" });
+    else {
+      await browserAuth()?.auth.signOut();
+      await refresh();
+    }
+    navigate("explore");
+  }
   function request(project: Project, kind: "idea" | "contribution") { }
   const user = hub.user;
   const list = hub.projects
