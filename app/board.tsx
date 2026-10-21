@@ -271,7 +271,16 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
     setEditing("");
     open("editor");
   }
-  function edit(project: Project) { }
+  function edit(project: Project) {
+    setEditor({ ...blankProject, ...project });
+    setEditing(project.id);
+    setRepoLabel(
+      project.repo
+        ? project.repo.replace("https://github.com/", "")
+        : "Local example repository",
+    );
+    open("editor");
+  }
   async function signIn() {
     setBusy(true);
     setFeedback("");

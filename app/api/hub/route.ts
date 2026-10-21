@@ -181,7 +181,21 @@ export async function POST(request: Request) {
     if (body.action === "saveProject") {
       const input = projectSchema.parse(body.project);
       let existing: Row | undefined;
-      if(body.id) throw new HttpError(403,"Project editing is unavailable.");
+      if (body.id) {
+        existing = (
+          await db.find("yak_projects", {
+            id: z.string().uuid().parse(body.id),
+          })
+        )[0];
+        if (!existing || existing.owner_id !== user.id)
+          throw new HttpError(403, "You can only edit your own projects.");
+
+        if (existing.repo_id !== input.repo_id)
+          throw new HttpError(
+            400,
+            "The connected repository cannot be changed.",
+          );
+      }
       let repo: Repo;
       const sample = local
         ? sampleRepos(user).find((r) => r.id === input.repo_id)
