@@ -127,9 +127,9 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
     const onFocus = () => {
       if (!document.hidden) void refresh();
     };
-
-
-    const timer: ReturnType<typeof setInterval> | undefined = undefined;
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+    const timer = setInterval(onFocus, 60000);
 
     return () => {
       subscription?.data.subscription.unsubscribe();
@@ -209,6 +209,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
       });
       const data = await response.json();
       if (!response.ok) throw Error(data.error);
+      await refresh();
       return true;
     } catch (e) {
       setFeedback((e as Error).message);
