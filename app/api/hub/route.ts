@@ -252,7 +252,10 @@ export async function POST(request: Request) {
         })
       )[0];
       if (!project) throw new HttpError(404, "Project unavailable.");
-
+      if (project.owner_id === user.id)
+        throw new HttpError(400, "You cannot apply to your own project.");
+      if (!project.contributions_open || project.status !== "In progress")
+        throw new HttpError(409, "This project is not accepting requests.");
 
 
       const saved = await db.save("yak_interactions", {
