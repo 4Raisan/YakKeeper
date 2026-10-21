@@ -1,1 +1,3 @@
-export default function Home(){return <main><h1>YakKeeper</h1></main>;}
+import Board from './board';
+
+export default function Page(){return <Board copyrightYear={new Date().getUTCFullYear()}/>;}
