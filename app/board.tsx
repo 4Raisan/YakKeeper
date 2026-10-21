@@ -84,7 +84,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
     const abort = new AbortController();
     readAbort.current = abort;
     try {
-      const response = await fetch("/api/hub", {
+      const response = await fetch("/api/hub?page=" + page, {
         headers: await authHeaders(),
         signal: abort.signal,
         cache: "no-store",
