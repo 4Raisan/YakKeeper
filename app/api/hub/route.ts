@@ -161,7 +161,9 @@ export async function GET(request: Request) {
     const sent = user
       ? await db.find("yak_interactions", { applicant_id: user.id })
       : [];
-    const blocks = [] as Row[];
+    const blocks = user
+      ? await db.find("yak_blocks", { owner_id: user.id })
+      : [];
     const reports = [] as Row[];
     return reply({
       configured: true,
@@ -260,7 +262,18 @@ export async function POST(request: Request) {
         throw new HttpError(400, "You cannot apply to your own project.");
       if (!project.contributions_open || project.status !== "In progress")
         throw new HttpError(409, "This project is not accepting requests.");
-
+      if (
+        (
+          await db.find("yak_blocks", {
+            owner_id: project.owner_id,
+            blocked_id: user.id,
+          })
+        ).length
+      )
+        throw new HttpError(
+          403,
+          "This project is not accepting your requests.",
+        );
       if (!(await db.limit("submit:" + user.id)))
         throw new HttpError(429, "Hourly request limit reached.");
       const saved = await db.save("yak_interactions", {
@@ -295,7 +308,17 @@ export async function POST(request: Request) {
       });
       return reply({ ok: true });
     }
-
+    if (body.action === "block") {
+      const blocked = z.string().uuid().parse(body.user_id);
+      if (blocked === user.id) throw new HttpError(400, "Invalid account.");
+      const existing = (
+        await db.find("yak_blocks", { owner_id: user.id, blocked_id: blocked })
+      )[0];
+      if (existing) await db.remove("yak_blocks", String(existing.id));
+      else
+        await db.save("yak_blocks", { owner_id: user.id, blocked_id: blocked });
+      return reply({ ok: true });
+    }
 
 
     throw new HttpError(400, "Unknown action.");

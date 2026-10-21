@@ -393,7 +393,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
                 disabled={busy}
                 className="text-button"
                 onClick={() =>
-                  Promise.resolve(false)
+                  action({ action: "block", user_id: r.applicant_id })
                 }
               >
                 {hub.blocks.includes(r.applicant_id) ? "Unblock" : "Block"}{" "}
