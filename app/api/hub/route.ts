@@ -243,7 +243,34 @@ export async function POST(request: Request) {
       else await db.save("yak_projects", { ...data, owner_id: user.id });
       return reply({ ok: true });
     }
+    if (body.action === "submit") {
+      const input = submissionSchema.parse(body);
+      const project = (
+        await db.find("yak_projects", {
+          id: input.project_id,
+          visibility: "public",
+        })
+      )[0];
+      if (!project) throw new HttpError(404, "Project unavailable.");
 
+
+
+      const saved = await db.save("yak_interactions", {
+        project_id: project.id,
+        project_title: project.title,
+        owner_id: project.owner_id,
+        applicant_id: user.id,
+        applicant_login: user.github_login,
+        kind: input.kind,
+        name: user.name,
+        email: "",
+        message: input.message,
+        status: "Received",
+        notification: "not configured",
+      });
+
+      return reply({ ok: true });
+    }
 
 
 

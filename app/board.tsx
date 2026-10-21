@@ -312,7 +312,15 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
     }
     navigate("explore");
   }
-  function request(project: Project, kind: "idea" | "contribution") { }
+  function request(project: Project, kind: "idea" | "contribution") {
+    if (!hub.user) {
+      open("login");
+      return;
+    }
+    setFeedback("");
+    setForm({ project, kind });
+    setExpanded(project.id);
+  }
   const user = hub.user;
   const list = hub.projects
     .filter((p) =>
