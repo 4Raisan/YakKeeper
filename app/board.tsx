@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import ProjectArt from "./project-art";
 import ThemeToggle from "./theme-toggle";
+import {demoAccounts} from "@/lib/hub-demo";
 import { bannerImage } from "@/lib/banner-image";
 import Github from "./github-icon";
 import { latestRequestGate } from "@/lib/hub-sync";
@@ -46,7 +47,7 @@ const emptyHub: HubState = {
   blocks: [],
   hasMore: false,
 };
-const views = ["explore", "my", "applications", "profile", "moderation"];
+const views = ["explore", "my", "applications", "moderation"];
 export default function Board({ copyrightYear }: { copyrightYear: number }) {
   const [hub, setHub] = useState<HubState>(emptyHub),
     [loading, setLoading] = useState(true),
@@ -331,15 +332,15 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
     setExpanded(project.id);
   }
   const user = hub.user;
+  const searchTerms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const list = hub.projects
     .filter((p) =>
       view === "my" ? p.owner_id === user?.id : p.visibility === "public",
     )
-    .filter((p) =>
-      `${p.title} ${p.tags} ${p.needs} ${p.owner_login} ${p.summary}`
-        .toLowerCase()
-        .includes(query.toLowerCase()),
-    )
+    .filter((p) => {
+      const text = `${p.title} ${p.tags} ${p.needs} ${p.owner_login} ${p.summary}`.toLowerCase();
+      return searchTerms.every(term => text.includes(term));
+    })
     .filter(
       (p) =>
         filter === "All projects" ||
@@ -355,72 +356,39 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
       ? "My projects"
       : view === "applications"
         ? "Applications"
-        : view === "profile"
-          ? "My profile"
           : view === "moderation"
             ? "Reports"
             : "Build together";
   function requestCard(r: HubRequest) {
     const received = applicationTab === "received";
-    return (
-      <article className="request" key={r.id}>
-        <div className="request-meta">
-          <span>{r.kind.toUpperCase()}</span>
-          <span>{r.project_title}</span>
-          <time>{new Date(r.created_at).toLocaleDateString()}</time>
+    const project = hub.projects.find(p => p.id === r.project_id);
+    const contactLogin = received ? r.applicant_login : project?.owner_login;
+    const canConnect = contactLogin && !contactLogin.endsWith("-demo") && !user?.demo;
+    return <article className="request compact-request" key={r.id}>
+      <div className="request-top">
+        <div className="request-title"><strong>{received ? r.name : r.project_title}</strong>
+          {canConnect && <a href={"https://github.com/"+contactLogin} target="_blank" rel="noreferrer">@{contactLogin}<ArrowUpRight size={12}/></a>}
         </div>
-        <div className="request-title">
-          <strong>{received ? r.name : r.project_title}</strong>
-          {r.applicant_login && !r.applicant_login.endsWith("-demo") && (
-            <a
-              href={"https://github.com/" + r.applicant_login}
-              target="_blank"
-              rel="noreferrer"
-            >
-              @{r.applicant_login}
-              <ArrowUpRight size={12} />
-            </a>
-          )}
-        </div>
-        <p className="pre-wrap">{r.message}</p>
-        <div className="request-bottom">
-          {received ? (
-            <>
-              <select
-                disabled={busy}
-                aria-label={"Status for " + r.name}
-                value={r.status}
-                onChange={(e) =>
-                  action({ action: "status", id: r.id, status: e.target.value })
-                }
-              >
-                {["Received", "Reviewing", "Accepted", "Declined"].map((s) => (
-                  <option key={s}>{s}</option>
-                ))}
-              </select>
-              <button
-                disabled={busy}
-                className="text-button"
-                onClick={() =>
-                  action({ action: "block", user_id: r.applicant_id })
-                }
-              >
-                {hub.blocks.includes(r.applicant_id) ? "Unblock" : "Block"}{" "}
-                applicant
-              </button>
-            </>
-          ) : (
-            <span className="status">{r.status}</span>
-          )}
-        </div>
-        {r.status === "Accepted" && (
-          <small>
-            Connect through GitHub to agree next steps. Repository access is
-            managed separately.
-          </small>
-        )}
-      </article>
-    );
+        {received ? <select className="request-status" disabled={busy} aria-label={"Status for "+r.name} value={r.status} onChange={e=>action({action:"status",id:r.id,status:e.target.value})}>
+          {["Received","Reviewing","Accepted","Declined"].map(status=><option key={status}>{status}</option>)}
+        </select> : <span className="status">{r.status}</span>}
+      </div>
+      <div className="request-meta"><span>{r.kind === "idea" ? "Idea" : "Join request"}</span><span>{received ? r.project_title : project?.owner_login ? "@"+project.owner_login : "Project owner unavailable"}</span><time dateTime={r.created_at}>{new Date(r.created_at).toLocaleDateString()}</time></div>
+      <p className="request-preview">{r.message}</p>
+      <div className="request-footer">
+        <details className="application-details"><summary>Details{r.status === "Accepted" ? " & next steps" : ""}</summary>
+          <p className="pre-wrap">{r.message}</p>
+          {r.status === "Accepted" && <p className="acceptance-note">Accepted in YakKeeper only. GitHub access is managed separately.{user?.demo ? " Sandbox account — no real invitation sent." : ""}</p>}
+          {!user?.demo && <div className="application-links">
+            {canConnect && <a className="text-button" href={"https://github.com/"+contactLogin} target="_blank" rel="noreferrer">{received ? "Applicant on GitHub" : "Owner on GitHub"}<ArrowUpRight size={13}/></a>}
+            {project?.repo && <a className="text-button" href={project.repo} target="_blank" rel="noreferrer">Repository<ArrowUpRight size={13}/></a>}
+            {received && r.status === "Accepted" && r.kind === "contribution" && project?.repo && <a className="text-button" href={project.repo.replace(/\/$/,"")+"/settings/access"} target="_blank" rel="noreferrer">Manage access<ArrowUpRight size={13}/></a>}
+          </div>}
+          {received && user?.role === "owner" && <small className="notification-detail">WhatsApp alert: {r.notification}</small>}
+        </details>
+        {received && <button disabled={busy} className="text-button block-applicant" onClick={()=>action({action:"block",user_id:r.applicant_id})}>{hub.blocks.includes(r.applicant_id) ? "Unblock" : "Block"}</button>}
+      </div>
+    </article>;
   }
   return (
     <div className="app">
@@ -468,12 +436,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
           <ThemeToggle />
           {user ? (
             <>
-              <button
-                className="user-name text-button"
-                onClick={() => navigate("profile")}
-              >
-                @{user.github_login}
-              </button>
+              <a className="user-name text-button" href={"https://github.com/" + user.github_login} target="_blank" rel="noreferrer">@{user.github_login}</a>
               <button
                 className="icon-button"
                 aria-label="Sign out"
@@ -515,12 +478,12 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
               ["explore", "Explore"],
               ["my", "My projects"],
               ["applications", "Applications"],
-              ["profile", "Profile"],
               ...(user?.role === "owner" ? [["moderation", "Reports"]] : []),
             ].map(([key, label]) => (
               <button
                 key={key}
                 className={view === key ? "active" : ""}
+                title={key === "applications" ? "Received and sent ideas or join requests" : key === "moderation" ? "Flagged projects — platform administrator only" : undefined}
                 onClick={() => navigate(key)}
               >
                 {label}
@@ -540,11 +503,11 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
                 <input
                   ref={searchInput}
                   aria-label="Search projects"
-                  placeholder="Projects, skills, people"
+                  placeholder="Search projects, skills or owners"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                 />
-                <kbd>/</kbd>
+                {query ? <button type="button" className="clear-search icon-button" aria-label="Clear search" onClick={()=>{setQuery("");searchInput.current?.focus();}}><X size={15}/></button> : <kbd>/</kbd>}
               </label>
               <label className="filter">
                 <select
@@ -587,7 +550,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
             <h2>Almost ready to connect.</h2>
             <p>GitHub sign-in and the database need configuration.</p>
           </div>
-        ) : ["my", "applications", "profile", "moderation"].includes(view) &&
+        ) : ["my", "applications", "moderation"].includes(view) &&
           !user ? (
           <div className="empty">
             <Github size={26} />
@@ -597,81 +560,6 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
               <ArrowRight size={14} />
             </button>
           </div>
-        ) : view === "profile" && user ? (
-          <section className="profile-panel">
-            <div className="profile-identity">
-              <Github size={28} />
-              <div>
-                <h2>{user.name}</h2>
-                <p>
-                  @{user.github_login} ·{" "}
-                  {user.demo ? "Demo account" : "GitHub connected"}
-                </p>
-              </div>
-            </div>
-            <form
-              onSubmit={async (e: FormEvent<HTMLFormElement>) => {
-                e.preventDefault();
-                const f = new FormData(e.currentTarget);
-                if (
-                  await action({
-                    action: "profile",
-                    profile: Object.fromEntries(
-                      ["bio", "skills", "availability", "timezone"].map((k) => [
-                        k,
-                        f.get(k) || "",
-                      ]),
-                    ),
-                  })
-                )
-                  setFeedback("Profile saved.");
-              }}
-            >
-              <label>
-                About you
-                <textarea
-                  name="bio"
-                  defaultValue={user.bio}
-                  maxLength={500}
-                  rows={3}
-                  placeholder="What would you like to build or learn?"
-                />
-              </label>
-              <label>
-                Skills
-                <input
-                  name="skills"
-                  defaultValue={user.skills}
-                  maxLength={200}
-                  placeholder="React, Python, design…"
-                />
-              </label>
-              <div className="form-pair">
-                <label>
-                  Availability
-                  <input
-                    name="availability"
-                    defaultValue={user.availability}
-                    maxLength={100}
-                    placeholder="2–4 hours / week"
-                  />
-                </label>
-                <label>
-                  Timezone
-                  <input
-                    name="timezone"
-                    defaultValue={user.timezone}
-                    maxLength={80}
-                    placeholder="Asia/Kolkata"
-                  />
-                </label>
-              </div>
-              <button className="button primary" disabled={busy}>
-                Save profile
-                <Check size={14} />
-              </button>
-            </form>
-          </section>
         ) : view === "applications" ? (
           <section className="inbox-list">
             <div className="application-tabs">
@@ -1092,20 +980,14 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
                 {hub.mode === "local" && (
                   <div className="demo-accounts">
                     <span>TRY THE LOCAL SANDBOX</span>
+                    <button className="small-button" disabled={busy} onClick={async()=>{
+                      if(await action({action:"demoSeed"})) setFeedback("Test workspace ready: 4 projects and 8 applications. Choose an account below.");
+                    }}>Load test workspace<Layers size={15}/></button>
                     <p>
                       These accounts are for testing. They are not GitHub
                       verified.
                     </p>
-                    {[
-                      [
-                        "11111111-1111-4111-8111-111111111111",
-                        "4Raisan · project owner",
-                      ],
-                      [
-                        "22222222-2222-4222-8222-222222222222",
-                        "Asha · contributor",
-                      ],
-                    ].map(([id, label]) => (
+                    {demoAccounts.map(({id,name}) => (
                       <button
                         className="small-button"
                         disabled={busy}
@@ -1123,7 +1005,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
                           }
                         }}
                       >
-                        {label}
+                        {name}
                         <ArrowRight size={14} />
                       </button>
                     ))}
