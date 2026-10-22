@@ -23,6 +23,7 @@ import {
   Flag,
 } from "lucide-react";
 import ProjectArt from "./project-art";
+import { bannerImage } from "@/lib/banner-image";
 import Github from "./github-icon";
 import { latestRequestGate } from "@/lib/hub-sync";
 import { browserAuth, authHeaders } from "@/lib/supabase-browser";
@@ -60,6 +61,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
     [editing, setEditing] = useState(""),
     [editor, setEditor] = useState({ ...blankProject }),
     [repoLabel, setRepoLabel] = useState("");
+  const [bannerBusy,setBannerBusy] = useState(false);
   const [repos, setRepos] = useState<Repo[]>([]),
     [repoPage, setRepoPage] = useState(1),
     [moreRepos, setMoreRepos] = useState(false),
@@ -744,6 +746,8 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
                   </span>
                   <div className="project-mark">
                     <ProjectArt
+                      key={p.banner_url}
+                      banner={p.banner_url}
                       title={p.title}
                       category={p.category}
                       index={index}
@@ -1203,26 +1207,34 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
                   {repoLabel}
                 </div>
                 <div className="repo-preview">
-                  <strong>{editor.title}</strong>
                   <p>{editor.summary || "Add a description in GitHub’s About section."}</p>
                   {editor.tags && <span>{editor.tags}</span>}
-                  <small>Name, description and language come from GitHub and refresh when you save.</small>
+                  <small>Name, description and language sync from GitHub.</small>
+                </div>
+                <div className="banner-picker">
+                  {(editor.banner_data || (editor.banner_data !== null && editor.banner_url)) && <img className="banner-preview" src={editor.banner_data || editor.banner_url} alt="Banner preview" />}
+                  <div>
+                    <label className="banner-upload">{bannerBusy ? "Preparing image…" : (editor.banner_data || (editor.banner_data !== null && editor.banner_url)) ? "Change banner" : "Add banner"}
+                      <input type="file" accept="image/png,image/jpeg,image/webp" disabled={busy || bannerBusy} onChange={async e => {
+                        const file = e.target.files?.[0]; e.target.value="";
+                        if (!file) return;
+                        setBannerBusy(true); setFeedback("");
+                        try {const image = await bannerImage(file); setEditor(current => ({...current,banner_data:image}));}
+                        catch(error) {setFeedback((error as Error).message);}
+                        finally {setBannerBusy(false);}
+                      }} />
+                    </label>
+                    <small>PNG, JPEG or WebP · cropped to 3:1</small>
+                  </div>
+                  {(editor.banner_data || (editor.banner_data !== null && editor.banner_url)) && <button type="button" className="text-button" disabled={busy || bannerBusy} onClick={()=>setEditor({...editor,banner_data:null})}>Remove</button>}
                 </div>
                 <label>Looking for
                   <input required minLength={3} maxLength={1000} placeholder="Frontend, design, documentation…" value={editor.needs} onChange={e => setEditor({...editor, needs:e.target.value})} />
                 </label>
-                <label>Next steps <span className="optional-label">optional</span>
-                  <textarea rows={2} maxLength={3000} value={editor.roadmap} onChange={e => setEditor({...editor, roadmap:e.target.value})} />
-                </label>
-                <div className="form-pair">
-                  <label>Live demo URL <span className="optional-label">optional</span>
-                    <input type="url" maxLength={500} value={editor.demo} onChange={e => setEditor({...editor, demo:e.target.value})} />
-                  </label>
+                <div className="editor-selects">
                   <label>Project type
                     <select value={editor.category} onChange={e => setEditor({...editor,category:e.target.value})}>{["Web apps", "AI & research", "Tools", "Design", "Other"].map(type => <option key={type}>{type}</option>)}</select>
                   </label>
-                </div>
-                <div className="form-pair">
                   <label>Project status
                     <select value={editor.status} onChange={e => setEditor({...editor,status:e.target.value})}>{["In progress","Completed","Paused"].map(value => <option key={value}>{value}</option>)}</select>
                   </label>
@@ -1230,6 +1242,15 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
                     <select value={editor.visibility} onChange={e => setEditor({...editor,visibility:e.target.value})}><option value="public">Everyone</option><option value="private">Only me</option><option value="archived">Archived</option></select>
                   </label>
                 </div>
+                <details className="editor-extra">
+                  <summary>More details <span className="optional-label">optional</span></summary>
+                  <label>Next steps
+                    <textarea rows={2} maxLength={3000} value={editor.roadmap} onChange={e => setEditor({...editor, roadmap:e.target.value})} />
+                  </label>
+                  <label>Live demo URL
+                    <input type="url" maxLength={500} value={editor.demo} onChange={e => setEditor({...editor, demo:e.target.value})} />
+                  </label>
+                </details>
                 <label className="checkbox-row">
                   <input
                     type="checkbox"
@@ -1256,7 +1277,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
                   />
                   Accepting ideas and teammates
                 </label>
-                <button className="button primary full" disabled={busy}>
+                <button className="button primary full" disabled={busy || bannerBusy}>
                   {busy
                     ? "Saving…"
                     : editing
