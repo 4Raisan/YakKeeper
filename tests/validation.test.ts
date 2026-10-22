@@ -33,7 +33,7 @@ test("publishing requires a repository and bounded valid project fields", () => 
 
     { visibility: "admin" },
     { status: "unknown" },
-    { needs: "" },
+    { needs: "x".repeat(1001) },
     { contributions_open: "yes" },
   ])
     assert.equal(
@@ -69,3 +69,12 @@ test("repository display fields cannot be supplied through collaboration inputs"
   assert.equal("summary" in parsed, false);
   assert.equal("description" in parsed, false);
 });
+
+ test("owners may omit needs but both request kinds need an explanation", () => {
+  for(const needs of [undefined,"","  ","UI"]) assert.equal(projectSchema.safeParse({...valid,needs}).success,true);
+  for(const kind of ["idea","contribution"]) {
+   const base={project_id:"1cb487fd-c7bf-491c-9412-bde2affc704a",kind,website:""};
+   for(const message of [undefined,"","   ","short"]) assert.equal(submissionSchema.safeParse({...base,message}).success,false);
+   assert.equal(submissionSchema.safeParse({...base,message:"I can help improve the frontend accessibility."}).success,true);
+  }
+ });

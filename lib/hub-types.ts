@@ -115,7 +115,7 @@ export const projectSchema = z.object({
   repo_id: z.number().int().positive(),
   category: z.enum(["Web apps", "AI & research", "Tools", "Design", "Other"]),
   status: z.enum(["In progress", "Completed", "Paused"]),
-  needs: z.string().trim().min(3).max(1000),
+  needs: z.string().trim().max(1000).default(""),
   roadmap: z.string().trim().max(3000),
   demo: url,
   visibility: z.enum(["public", "private", "archived"]),

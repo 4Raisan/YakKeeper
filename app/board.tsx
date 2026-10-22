@@ -1125,8 +1125,8 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
                   </label>
                   {(editor.banner_data || (editor.banner_data !== null && editor.banner_url)) && <button type="button" className="text-button" disabled={busy || bannerBusy} onClick={()=>setEditor({...editor,banner_data:null})}>Remove</button>}
                 </div>
-                <label>Looking for
-                  <input required minLength={3} maxLength={1000} placeholder="Frontend, design, documentation…" value={editor.needs} onChange={e => setEditor({...editor, needs:e.target.value})} />
+                <label>Looking for <span className="optional-label">optional</span>
+                  <input maxLength={1000} placeholder="Frontend, design, documentation…" value={editor.needs} onChange={e => setEditor({...editor, needs:e.target.value})} />
                 </label>
                 <div className="editor-selects">
                   <label>Project type
