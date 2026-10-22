@@ -1,8 +1,14 @@
-import Image from 'next/image';
-import {useState} from 'react';
-export default function ProjectArt({title,category,index,banner}:{title:string;category:string;index:number;banner?:string}){
- const [failed,setFailed]=useState(false);
- if (banner && !failed) return <div className="project-cover" aria-hidden="true"><img src={banner} alt="" loading="lazy" decoding="async" onError={()=>setFailed(true)} /></div>;
- const isYakKeeper=title.trim().toLowerCase()==='yakkeeper';
- return <div className={'project-art art-theme-'+index%3+(isYakKeeper?' yak-art':'')} aria-hidden="true"><div className="art-grid"/><div className="art-top"><span>{category.toUpperCase()}</span><span>0{index+1} / YK</span></div>{isYakKeeper?<Image src="/brand/yakkeeper.webp" alt="" fill sizes="(max-width: 650px) 340px, 250px" className="yak-project-logo"/>:<svg viewBox="0 0 280 190" className="art-symbol" fill="none"><ellipse cx="140" cy="95" rx="92" ry="58" stroke="currentColor" strokeWidth=".7" transform="rotate(-36 140 95)"/><ellipse cx="140" cy="95" rx="92" ry="58" stroke="currentColor" strokeWidth=".7" transform="rotate(36 140 95)"/><ellipse cx="140" cy="95" rx="92" ry="58" stroke="currentColor" strokeWidth=".7" transform="rotate(90 140 95)"/><path d="M112 83c-21 3-25-20-18-32 0 16 12 20 24 15m50 17c21 3 25-20 18-32 0 16-12 20-24 15" stroke="currentColor" strokeWidth="5" strokeLinecap="round"/><path d="m119 69 13-12 8 5 8-5 13 12 9 24-9 31-12-5-9 11-9-11-12 5-9-31Z" fill="currentColor"/><path d="m126 92 7 3m21-3-7 3" stroke="#5866e5" strokeWidth="4" strokeLinecap="round"/><circle cx="217" cy="54" r="8" className="orbit-dot"/></svg>}<div className="art-bottom"><strong>{title}</strong><span>↗</span></div></div>;
+import Image from "next/image";
+import {useState} from "react";
+export default function ProjectArt({title,category,index,banner}:{title:string;category:string;index:number;banner?:string}) {
+  const [failed,setFailed]=useState(false);
+  if (banner && !failed) return <div className="project-cover" aria-hidden="true"><img src={banner} alt="" loading="lazy" decoding="async" onError={()=>setFailed(true)} /></div>;
+  const isYakKeeper=title.trim().toLowerCase()==="yakkeeper";
+  const initials=title.split(/[^\p{L}\p{N}]+/u).filter(Boolean).slice(0,2).map(word=>word[0]).join("").toUpperCase();
+  return <div className={"project-art art-theme-"+index%3+(isYakKeeper?" yak-art":"")} aria-hidden="true">
+    <div className="art-grid"/>
+    <div className="art-top"><span>{category.toUpperCase()}</span><span>{String(index+1).padStart(2,"0")} / YK</span></div>
+    {isYakKeeper ? <Image src="/brand/yak-mark.svg" alt="" fill sizes="(max-width:650px) 340px,250px" className="yak-project-logo"/> : <span className="art-monogram">{initials}</span>}
+    <div className="art-bottom"><strong>{title}</strong><span>↗</span></div>
+  </div>;
 }
