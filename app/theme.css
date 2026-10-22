@@ -94,4 +94,5 @@ input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px soli
 .editor-dialog .banner-upload-bar small{margin:0;font-size:12px}
 .editor-dialog .banner-picker>.text-button{position:relative;padding:12px;flex-shrink:0}
 .editor-dialog .banner-upload-bar:has(input:disabled){cursor:wait;opacity:.6}
+@media(min-width:1280px){.project-list{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:650px){.editor-dialog .banner-upload-bar>div{align-items:flex-start;flex-direction:column;gap:4px}}
