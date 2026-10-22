@@ -1,6 +1,6 @@
 # YakKeeper
 
-<p align="center"><img src="docs/assets/yakkeeper-readme-logo.png" alt="YakKeeper" width="640"></p>
+<p align="center"><img src="docs/assets/yakkeeper-readme-banner.svg" alt="YakKeeper" width="640"></p>
 
 **Where projects meet their next contributors.**
 
