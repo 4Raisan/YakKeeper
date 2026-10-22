@@ -1,0 +1,53 @@
+/* Semantic surfaces and accents shared by both modes. */
+:root{color-scheme:dark;--bg:#111512;--surface:#1b211d;--raised:#252f28;--field:#141a16;--ink:#f1f5f1;--muted:#b4c1b7;--subtle:#9eafa2;--line:#39463d;--strong:#607566;--accent:#a2dcb3;--action:#286440;--action-hover:#337b4f;--action-ink:#fff;--mint:#8bcfa2;--accent-soft:#283d2f;--mint-soft:#253d2e;--overlay:#080e0ab8;--shadow:#00000025}
+:root[data-theme=light]{color-scheme:light;--bg:#f4f6f1;--surface:#fff;--raised:#e9efe7;--field:#f7f9f5;--ink:#1e2921;--muted:#536357;--subtle:#5c6b60;--line:#d4ded2;--strong:#9eaf9f;--accent:#275e3b;--action:#2d6843;--action-hover:#245737;--action-ink:#fff;--mint:#286441;--accent-soft:#e4efe2;--mint-soft:#e0efdf;--overlay:#1b2e2070;--shadow:#263d2c12}
+body,.app{background:var(--bg);color:var(--ink)}
+.app>header{background:color-mix(in srgb,var(--bg) 94%,transparent);border-color:var(--line)}
+.header-description,.user-name,.search,.search input::placeholder,.filter select,nav button,.summary,.project-meta,.profile-identity p,.modal label,.modal-note,.application-as,.roadmap,.request-meta,.request-bottom small,.notification-state,.repo-preview p,.repo-option small,.login-panel>small,.login-intro,.login-brand-lockup p,.optional-label,.setup-note,.sandbox-bar,footer,.board-end,.editor-extra summary{color:var(--muted)}
+.header-divider,.board-end:after{background:var(--line)}
+.board-toolbar,.sandbox-bar,.filter,.search kbd,.project-owner,.project-details,.roadmap,.request,.request-bottom,.demo-accounts,.repo-preview,.repo-option,.application-tabs,.repo-search{border-color:var(--line)}
+nav button.active,.brand-period,.text-button:hover,.project-owner:hover,.project-meta .needs,.repo-preview>span,.login-trust svg{color:var(--accent)}
+.project-meta .needs{color:var(--mint)}
+nav button.active{border-color:var(--accent)}
+.primary,.small-button.contribute{background:var(--action);border-color:var(--action);color:var(--action-ink)}
+.primary:hover,.small-button.contribute:hover{background:var(--action-hover);border-color:var(--action-hover)}
+.small-button,.sign-in,.theme-toggle{border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.small-button:hover,.small-button.selected,.sign-in:hover,.icon-button:hover,.theme-toggle:hover{background:var(--raised);border-color:var(--strong);color:var(--ink);transform:none}
+.theme-toggle{width:36px;height:36px;border-radius:9px;flex-shrink:0}
+.empty,.search kbd,.send-row small,.demo-accounts>span,.overline,.header-description{color:var(--muted)}
+::selection{background:var(--accent-soft);color:var(--ink)}
+.project{background:var(--surface);border-color:var(--line);box-shadow:0 5px 18px var(--shadow)}
+.project:hover{border-color:var(--strong);box-shadow:0 9px 26px var(--shadow)}
+.project-title,.profile-identity h2,.modal h2,.repo-preview strong,.request-title strong{color:var(--ink)}
+.status,.visibility,.preview-label{background:var(--accent-soft);color:var(--accent);border-color:color-mix(in srgb,var(--accent) 30%,var(--line))}
+.project-badges span{border-color:var(--line);color:var(--muted);background:var(--field)}
+.project-list .project-owner,.project-title>svg,.project-links a,.project-links button{color:var(--muted);border-color:var(--line)}
+.project-art,.art-theme-1,.art-theme-2{background:#244e35;color:#fff}.art-theme-1{background:#394e45}.art-theme-2{background:#465b37}
+.project-art:before{display:none}.art-top{color:#e1efdf}.art-symbol,.art-theme-1 .art-symbol,.art-theme-2 .art-symbol{color:#f3f8f1}.orbit-dot{fill:#a2dcb3;stroke:#e7f5e6}
+.modal-backdrop{background:var(--overlay)}
+.modal,.login-dialog,.inline-panel,.request{background:var(--surface);border-color:var(--line);color:var(--ink)}
+.modal input,.modal select,.modal textarea,.profile-panel input,.profile-panel textarea,.inline-panel input,.inline-panel textarea,.request-bottom select{background:var(--field);border-color:var(--line);color:var(--ink)}
+input::placeholder,textarea::placeholder{color:var(--subtle);opacity:1}
+select option{background:var(--surface);color:var(--ink)}
+input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.connected-repo,.repo-search{background:var(--field);color:var(--ink);border-color:var(--line)}
+.banner-picker{border-color:var(--strong)}.banner-picker small,.repo-preview small,.demo-accounts p,.project-details,.login-dialog .login-intro,.login-dialog .login-trust{color:var(--muted)}
+.application-tabs button{color:var(--muted);border-color:var(--line)}.application-tabs .selected,nav button>span{color:var(--accent);background:var(--accent-soft);border-color:var(--accent)}
+.repo-option:hover{background:var(--raised)}.repo-option em{color:var(--mint)}
+.login-brand-banner{background:var(--accent-soft);border-color:var(--line)}.login-brand-banner:before{opacity:.35}.login-brand-lockup img{box-shadow:none}.login-dialog .modal-heading .icon-button{background:var(--surface);border-color:var(--line);color:var(--ink)}
+.feedback{color:var(--mint)}.alert{color:var(--ink);background:var(--raised);border-color:var(--strong)}
+.board-end,.board-end span,.board-end a{color:var(--subtle)}.board-end:before{background:var(--line)}
+.brand .brand-logo{border-radius:12px}.header-right{gap:13px}
+/* A visible, sparse signal field. Only transforms and stroke offsets animate. */
+.ambient-background svg{opacity:1}.ambient-background g{animation:none}.ambient-purple{stroke:#88b894;opacity:.16}.ambient-mint{stroke:#76ad82;opacity:.15;animation:none!important}
+.ambient-signals{opacity:.85}.signal-trail{stroke:#98c8a3;stroke-width:1.5;stroke-dasharray:65 1700;animation:signal-flow 16s linear infinite}.signal-violet{fill:#b8e8bf}.signal-mint{fill:#92cc9d}
+.signal-halo{fill:#a2dcb3;fill-opacity:.13;stroke:#a2dcb3;stroke-opacity:.35;stroke-width:.8}.mint-halo{fill:#92cc9d;stroke:#92cc9d}
+.ambient-background:after{content:"";position:absolute;inset:0;background-image:radial-gradient(var(--strong) .7px,transparent .7px);background-size:38px 38px;opacity:.12;mask-image:linear-gradient(90deg,transparent 35%,#000)}
+:root[data-theme=light] .ambient-purple{stroke:#2d6843;opacity:.12}:root[data-theme=light] .ambient-mint{stroke:#286441;opacity:.13}:root[data-theme=light] .ambient-signals{opacity:.65}:root[data-theme=light] .signal-violet{fill:#3b8650}:root[data-theme=light] .signal-mint{fill:#286441}
+@keyframes signal-flow{to{stroke-dashoffset:-1765}}
+@media(prefers-reduced-motion:reduce){.ambient-signals{display:none}.signal-trail{animation:none}}
+@media(max-width:650px){.header-right{gap:8px}.theme-toggle{width:32px;height:32px}.ambient-background svg{opacity:.8}.brand .brand-logo{border-radius:10px}}
+
+/* Approved circular badge: preserve its shape in every placement. */
+.brand .brand-logo,.login-brand-lockup img{border-radius:50%;box-shadow:0 0 0 1px var(--strong)}
+.art-monogram{position:absolute;inset:0;display:grid;place-items:center;font-size:54px;font-weight:750;letter-spacing:-3px;color:#f1f5f1;opacity:.9}.project-art .art-grid{opacity:.45}.project-art .art-bottom strong{font-size:17px}.yak-art .yak-project-logo{padding:6px 12px;object-fit:contain}
