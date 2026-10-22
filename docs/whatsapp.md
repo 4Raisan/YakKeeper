@@ -34,5 +34,5 @@ The application is saved before notification. Disabled/missing/invalid configura
 Local setup check (outputs only readiness and missing variable names):
 
 ```powershell
-node --experimental-strip-types --env-file=.env.local --input-type=module -e "import {whatsappConfiguration} from './lib/hub-whatsapp.ts'; console.log(whatsappConfiguration())"
+node --experimental-strip-types --env-file=.env.local --input-type=module -e "import {whatsappConfiguration} from './src/lib/hub-whatsapp.ts'; console.log(whatsappConfiguration())"
 ```

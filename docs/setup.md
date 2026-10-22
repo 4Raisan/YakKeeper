@@ -46,4 +46,4 @@ Banners accept PNG, JPEG and WebP up to 8 MB. The browser crops them to 3:1 and 
 
 Public listings load 24 at a time, up to 240. Management and application lists return the latest 100 records. GitHub public metadata is cached per process for five minutes; API rate limits apply. Repository data refreshes on save rather than continuously synchronizing GitHub activity.
 
-Deleting a listing also removes its applications, ideas and reports. The GitHub repository is untouched. Moderator-restricted repository IDs remain blocked after deletion. See [security](../SECURITY.md) and [optional WhatsApp setup](whatsapp.md).
+Deleting a listing also removes its applications, ideas and reports. The GitHub repository is untouched. Moderator-restricted repository IDs remain blocked after deletion. See [security](../.github/SECURITY.md) and [optional WhatsApp setup](whatsapp.md).

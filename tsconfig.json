@@ -25,24 +25,22 @@
     ],
     "paths": {
       "@/*": [
-        "./*"
+        "./src/*"
       ]
     },
     "types": ["node"]
   },
   "include": [
     "next-env.d.ts",
-    "app/**/*.ts",
-    "app/**/*.tsx",
-    "lib/supabase*.ts",
-    "lib/hub*.ts",
+    "src/app/**/*.ts",
+    "src/app/**/*.tsx",
+    "src/lib/**/*.ts",
     "next.config.ts",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
-    "tests/**/*.ts"
+    "src/tests/**/*.ts"
   ],
   "exclude": [
-    "node_modules",
-    "examples"
+    "node_modules"
   ]
 }

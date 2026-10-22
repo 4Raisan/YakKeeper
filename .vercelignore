@@ -6,6 +6,6 @@ node_modules
 .env*
 !.env.example
 docs
-tests
+src/tests
 supabase
 AGENTS.md
