@@ -992,7 +992,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
       {modal && (
         <div className="modal-backdrop" onClick={close}>
           <section
-            className={"modal" + (modal === "login" ? " login-dialog" : "")}
+            className={"modal" + (modal === "login" ? " login-dialog" : modal === "editor" ? " editor-dialog" : "")}
             ref={dialog}
             role="dialog"
             aria-modal="true"
