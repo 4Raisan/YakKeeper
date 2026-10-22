@@ -897,7 +897,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
         <span>Where projects meet their next contributors.</span>
       </footer>
       {modal && (
-        <div className="modal-backdrop" onClick={close}>
+        <div className="modal-backdrop">
           <section
             className={"modal" + (modal === "login" ? " login-dialog" : modal === "editor" ? " editor-dialog" : "")}
             ref={dialog}
@@ -914,7 +914,6 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
             }
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => {
-              if (e.key === "Escape") close();
               if (e.key === "Tab") {
                 const items = dialog.current?.querySelectorAll<HTMLElement>(
                   "button:not(:disabled),input:not(:disabled),select,textarea,a[href]",
