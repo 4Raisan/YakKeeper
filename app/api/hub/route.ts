@@ -20,6 +20,8 @@ import { publicRepos, ownedRepo, github, repositoryDisplay } from "../../../lib/
 import { sampleRepos } from "../../../lib/hub-demo.ts";
 import type { Repo } from "../../../lib/hub-types.ts";
 import { withBanners, saveBanner, removeBanner } from "../../../lib/hub-banners.ts";
+import {notifyAdmin} from "../../../lib/hub-whatsapp.ts";
+import {seedDemoWorkspace} from "../../../lib/hub-demo-seed.ts";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 async function boundedJson(request: Request) {
@@ -207,6 +209,11 @@ export async function POST(request: Request) {
         "Set-Cookie": "yk_demo=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0",
       });
     }
+    if (body.action === "demoSeed") {
+      if (!local) throw new HttpError(404,"Local sandbox is disabled.");
+      await seedDemoWorkspace(store(true));
+      return reply({ok:true});
+    }
     if (!local && !configured())
       throw new HttpError(503, "Server configuration is incomplete.");
     const db = store(local),
@@ -320,14 +327,14 @@ export async function POST(request: Request) {
         email: "",
         message: input.message,
         status: "Received",
-        notification: "not configured",
+        notification: local ? "sandbox (not sent)" : "in-app only",
       });
       if (
         !local &&
         project.owner_id ===
           (await db.find("yak_profiles", { role: "owner" }))[0]?.id
       )
-        await notify(saved, project, db);
+        await notifyAdmin(saved, project, db);
       return reply({ ok: true });
     }
     if (body.action === "status") {
@@ -399,54 +406,4 @@ export async function POST(request: Request) {
   } catch (e) {
     return failure(e);
   }
-}
-async function notify(record: Row, project: Row, db: ReturnType<typeof store>) {
-  if (
-    !process.env.META_WHATSAPP_TOKEN ||
-    !process.env.META_PHONE_NUMBER_ID ||
-    !process.env.WHATSAPP_TO ||
-    !process.env.WHATSAPP_TEMPLATE ||
-    !/^v\d+\.\d+$/.test(process.env.META_GRAPH_VERSION || "")
-  )
-    return;
-  let notification = "failed";
-  try {
-    const r = await fetch(
-      `https://graph.facebook.com/${process.env.META_GRAPH_VERSION}/${process.env.META_PHONE_NUMBER_ID}/messages`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: "Bearer " + process.env.META_WHATSAPP_TOKEN,
-          "Content-Type": "application/json",
-        },
-        signal: AbortSignal.timeout(8000),
-        body: JSON.stringify({
-          messaging_product: "whatsapp",
-          to: process.env.WHATSAPP_TO,
-          type: "template",
-          template: {
-            name: process.env.WHATSAPP_TEMPLATE,
-            language: { code: process.env.WHATSAPP_LANGUAGE || "en_US" },
-            components: [
-              {
-                type: "body",
-                parameters: [
-                  { type: "text", text: String(record.kind) },
-                  { type: "text", text: String(project.title) },
-                  {
-                    type: "text",
-                    text: process.env.APP_URL
-                      ? new URL("/?view=applications", process.env.APP_URL).href
-                      : "YakKeeper inbox",
-                  },
-                ],
-              },
-            ],
-          },
-        }),
-      },
-    );
-    if (r.ok) notification = "accepted by Meta";
-  } catch {}
-  await db.patch("yak_interactions", String(record.id), { notification });
 }

@@ -3,6 +3,7 @@ import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { randomUUID, randomBytes } from "node:crypto";
 import { serverDb, check, digest, HttpError } from "./supabase-server.ts";
+import {demoAccounts} from "./hub-demo.ts";
 export type Row = Record<string, unknown>;
 export type Store = {
   find: (table: string, filters?: Row, limit?: number) => Promise<Row[]>;
@@ -151,22 +152,7 @@ export function store(local: boolean): Store {
     },
   };
 }
-export const demoUsers = [
-  {
-    id: "11111111-1111-4111-8111-111111111111",
-    name: "4Raisan",
-    github_login: "4Raisan",
-    github_id: "demo-raisan",
-    role: "owner",
-  },
-  {
-    id: "22222222-2222-4222-8222-222222222222",
-    name: "Asha · demo",
-    github_login: "asha-demo",
-    github_id: "demo-asha",
-    role: "collaborator",
-  },
-];
+export const demoUsers = demoAccounts;
 export async function demoSession(userId: string) {
   const account = demoUsers.find((u) => u.id === userId);
   if (!account) throw new HttpError(400, "Choose a demo account.");
