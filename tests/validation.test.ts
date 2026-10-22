@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   projectSchema,
+  projectCategories,
   submissionSchema,
   blankProject,
 } from "../lib/hub-types.ts";
@@ -78,3 +79,9 @@ test("repository display fields cannot be supplied through collaboration inputs"
    assert.equal(submissionSchema.safeParse({...base,message:"I can help improve the frontend accessibility."}).success,true);
   }
  });
+
+test("practical project categories share the editor validation and keep legacy listings valid",()=>{
+ for(const category of projectCategories) assert.equal(projectSchema.safeParse({...valid,category}).success,true);
+ for(const category of ["Software","Websites","Web apps","Tools","Documentation","Machine learning"]) assert.ok(projectCategories.includes(category as typeof projectCategories[number]));
+ assert.equal(projectSchema.safeParse({...valid,category:"arbitrary unlisted type"}).success,false);
+});

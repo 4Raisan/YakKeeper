@@ -111,9 +111,14 @@ const url = z
       return false;
     }
   }, "Use an HTTP(S) URL.");
+export const projectCategories = [
+  "Software", "Websites", "Web apps", "Mobile apps", "APIs & backend",
+  "Tools", "Developer tools", "Automation", "AI & research", "Machine learning",
+  "Data & analytics", "Cloud & DevOps", "Games", "Documentation", "Design", "Other",
+] as const;
 export const projectSchema = z.object({
   repo_id: z.number().int().positive(),
-  category: z.enum(["Web apps", "AI & research", "Tools", "Design", "Other"]),
+  category: z.enum(projectCategories),
   status: z.enum(["In progress", "Completed", "Paused"]),
   needs: z.string().trim().max(1000).default(""),
   roadmap: z.string().trim().max(3000),

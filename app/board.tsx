@@ -31,6 +31,7 @@ import { latestRequestGate } from "@/lib/hub-sync";
 import { browserAuth, authHeaders } from "@/lib/supabase-browser";
 import {
   blankProject,
+  projectCategories,
   type Project,
   type HubState,
   type Repo,
@@ -1132,7 +1133,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
                 </label>
                 <div className="editor-selects">
                   <label>Project type
-                    <select value={editor.category} onChange={e => setEditor({...editor,category:e.target.value})}>{["Web apps", "AI & research", "Tools", "Design", "Other"].map(type => <option key={type}>{type}</option>)}</select>
+                    <select value={editor.category} onChange={e => setEditor({...editor,category:e.target.value})}>{projectCategories.map(type => <option key={type}>{type}</option>)}</select>
                   </label>
                   <label>Project status
                     <select value={editor.status} onChange={e => setEditor({...editor,status:e.target.value})}>{["In progress","Completed","Paused"].map(value => <option key={value}>{value}</option>)}</select>
