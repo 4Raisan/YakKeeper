@@ -23,6 +23,7 @@ import {
   Flag,
 } from "lucide-react";
 import ProjectArt from "./project-art";
+import ThemeToggle from "./theme-toggle";
 import { bannerImage } from "@/lib/banner-image";
 import Github from "./github-icon";
 import { latestRequestGate } from "@/lib/hub-sync";
@@ -423,10 +424,34 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
   }
   return (
     <div className="app">
+      <div className="ambient-background" aria-hidden="true">
+        <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" fill="none">
+          <defs>
+            <path id="signal-right" d="M850-150C390 70 1310 170 1030 480S990 970 1570 1020" />
+            <path id="signal-left" d="M-240 160C240 50-100 470 290 610S390 1020 80 1080" />
+          </defs>
+          <g className="ambient-purple">
+            <path d="M850-150C390 70 1310 170 1030 480S990 970 1570 1020" />
+            <path d="M910-150C450 70 1370 170 1090 480S1050 970 1630 1020" />
+            <path d="M970-150C510 70 1430 170 1150 480S1110 970 1690 1020" />
+          </g>
+          <g className="ambient-signals">
+            <use href="#signal-right" className="signal-trail"/>
+            <g><animateMotion dur="16s" repeatCount="indefinite"><mpath href="#signal-right"/></animateMotion><circle r="14" className="signal-halo"/><circle r="5" className="signal-violet"/></g>
+            <circle r="3" className="signal-violet"><animateMotion dur="16s" begin="-8s" repeatCount="indefinite"><mpath href="#signal-right"/></animateMotion></circle>
+            <g><animateMotion dur="20s" begin="-7s" repeatCount="indefinite"><mpath href="#signal-left"/></animateMotion><circle r="12" className="signal-halo mint-halo"/><circle r="4" className="signal-mint"/></g>
+          </g>
+          <g className="ambient-mint">
+            <path d="M-240 160C240 50-100 470 290 610S390 1020 80 1080" />
+            <path d="M-280 195C200 85-140 505 250 645S350 1055 40 1115" />
+            <circle cx="290" cy="610" r="4" />
+          </g>
+        </svg>
+      </div>
       <header>
         <a className="brand" href="/" aria-label="YakKeeper home">
           <Image
-            src="/brand/yakkeeper.webp"
+            src="/brand/yak-mark.svg"
             alt=""
             width={44}
             height={44}
@@ -440,6 +465,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
         <span className="header-divider" />
         <span className="header-description">projects / people / progress</span>
         <div className="header-right">
+          <ThemeToggle />
           {user ? (
             <>
               <button
@@ -482,18 +508,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
             </button>
           </div>
         )}
-        <section className="board-heading">
-          <div className="title-line">
-            <h1>
-              {title}
-              <span>.</span>
-            </h1>
-            <p>
-              Where projects meet their next contributors.
-            </p>
-          </div>
-
-        </section>
+        <h1 className="sr-only">{title}</h1>
         <div className="board-toolbar">
           <nav aria-label="Project sections">
             {[
@@ -1032,7 +1047,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
           >
             {modal === "login" && <div className="login-brand-banner">
               <div className="login-brand-lockup">
-                <Image src="/brand/yakkeeper.webp" alt="" width={76} height={76} />
+                <Image src="/brand/yak-mark.svg" alt="" width={76} height={76} />
                 <div><span>YakKeeper<span className="brand-period">.</span></span><p>Where projects meet their next contributors.</p></div>
               </div>
             </div>}
