@@ -121,6 +121,9 @@ export function store(local: boolean): Store {
       db.exec("BEGIN IMMEDIATE");
       try {
         if (table === "yak_projects") {
+          const record = db.prepare("SELECT data FROM records WHERE collection=? AND id=?").get(table,id) as {data:string}|undefined;
+          const project = record ? JSON.parse(record.data) : null;
+          if (project?.moderated && project.repo_id) db.prepare("INSERT OR IGNORE INTO records VALUES ('yak_repo_restrictions',?,?)").run(String(project.repo_id),JSON.stringify({id:String(project.repo_id),repo_id:project.repo_id,created_at:new Date().toISOString()}));
           db.prepare("DELETE FROM records WHERE collection IN ('yak_interactions','yak_reports') AND json_extract(data,'$.project_id')=?").run(id);
         }
         db.prepare("DELETE FROM records WHERE collection=? AND id=?").run(table,id);

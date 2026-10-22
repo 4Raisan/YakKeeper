@@ -239,6 +239,8 @@ export async function POST(request: Request) {
     }
     if (body.action === "saveProject") {
       const {banner_data,...input} = projectSchema.parse(body.project);
+      if ((await db.find("yak_repo_restrictions",{repo_id:input.repo_id},1)).length)
+        throw new HttpError(403,"This repository was restricted by a moderator.");
       let existing: Row | undefined;
       if (body.id) {
         existing = (

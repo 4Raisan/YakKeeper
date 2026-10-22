@@ -39,4 +39,9 @@ test("only listing owners can confirm deletion; all dependent records disappear 
  assert.equal((await db.find("yak_interactions",{id:retained.id})).length,1);
  assert.equal((await call(body,cookies[2])).status,403);
  assert.equal((await call({action:"saveProject",project},cookies[2])).status,200);
+ const restored=(await db.find("yak_projects",{repo_id:project.repo_id}))[0];
+ await db.patch("yak_projects",String(restored.id),{moderated:true,visibility:"archived"});
+ assert.equal((await call({...body,id:restored.id},cookies[2])).status,200);
+ assert.equal((await call({action:"saveProject",project},cookies[2])).status,403);
+ assert.equal((await db.find("yak_repo_restrictions",{repo_id:project.repo_id})).length,1);
 });
