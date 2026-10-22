@@ -96,3 +96,10 @@ input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px soli
 .editor-dialog .banner-upload-bar:has(input:disabled){cursor:wait;opacity:.6}
 @media(min-width:1280px){.project-list{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:650px){.editor-dialog .banner-upload-bar>div{align-items:flex-start;flex-direction:column;gap:4px}}
+
+.delete-project{margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+.delete-project-link{color:var(--muted);padding:6px 0}
+.delete-project strong{font-size:15px;color:var(--ink)}
+.delete-project p{font-size:13px;color:var(--muted);margin:8px 0 12px}
+.delete-project-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+.danger-button{background:#ae3037;color:#fff;border-color:#ae3037}.danger-button:hover{background:#94262d;color:#fff;border-color:#94262d}

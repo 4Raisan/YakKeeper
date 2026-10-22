@@ -64,6 +64,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
     [editor, setEditor] = useState({ ...blankProject }),
     [repoLabel, setRepoLabel] = useState("");
   const [bannerBusy,setBannerBusy] = useState(false);
+  const [confirmDelete,setConfirmDelete] = useState(false);
   const [repos, setRepos] = useState<Repo[]>([]),
     [repoPage, setRepoPage] = useState(1),
     [moreRepos, setMoreRepos] = useState(false),
@@ -192,6 +193,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
     history.replaceState(null, "", next === "explore" ? "/" : "/?view=" + next);
   }
   function open(next: string) {
+    setConfirmDelete(false);
     setFeedback("");
     setModal(next);
   }
@@ -1182,6 +1184,18 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
                       : "Publish project"}
                   <Check size={14} />
                 </button>
+                {editing && <div className="delete-project">
+                  {!confirmDelete ? <button type="button" className="text-button delete-project-link" disabled={busy || bannerBusy} onClick={()=>setConfirmDelete(true)}>Delete from YakKeeper</button> : <div role="group" aria-label="Confirm project deletion">
+                    <strong>Delete this listing permanently?</strong>
+                    <p>Its applications, ideas, reports and banner will also be removed. Your GitHub repository stays untouched.</p>
+                    <div className="delete-project-actions">
+                      <button type="button" className="small-button" disabled={busy} onClick={()=>setConfirmDelete(false)}>Keep project</button>
+                      <button type="button" className="small-button danger-button" disabled={busy || bannerBusy} onClick={async()=>{
+                        if(await action({action:"deleteProject",id:editing,confirm:true})) {setModal("");setEditing("");setExpanded("");}
+                      }}>{busy ? "Deleting…" : "Delete permanently"}</button>
+                    </div>
+                  </div>}
+                </div>}
               </form>
             )}
             {modal === "report" && (
