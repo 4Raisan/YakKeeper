@@ -108,3 +108,5 @@ Fresh installations need OAuth provider credentials and the server secret. Autom
 The horned YK circle is the shared website, favicon and documentation identity. Light/dark mode follows the system on first visit and remembers an explicit choice. Neutral black surfaces, blue actions and restrained mint details distinguish dark mode; light mode uses pale blue surfaces and colored covers; background signals stop under reduced-motion preference. See [design notes](docs/design.md) for sources and decisions.
 
 Owner deletion is permanent within YakKeeper and requires confirmation in the editor. The listing and its applications, ideas and reports are removed together; banner cleanup follows deletion and logs any storage failure. The GitHub repository is never changed. Apply `20261022102318_project_deletion.sql` before deploying this feature.
+
+Deleting a moderator-restricted listing preserves only its numeric repository ID in a server-only restriction table, preventing deletion/republication from bypassing moderation. Apply the `preserve_moderation_on_deletion` migration before deploying this version.
