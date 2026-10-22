@@ -118,10 +118,14 @@ export function store(local: boolean): Store {
       );
     },
     async remove(table, id) {
-      db.prepare("DELETE FROM records WHERE collection=? AND id=?").run(
-        table,
-        id,
-      );
+      db.exec("BEGIN IMMEDIATE");
+      try {
+        if (table === "yak_projects") {
+          db.prepare("DELETE FROM records WHERE collection IN ('yak_interactions','yak_reports') AND json_extract(data,'$.project_id')=?").run(id);
+        }
+        db.prepare("DELETE FROM records WHERE collection=? AND id=?").run(table,id);
+        db.exec("COMMIT");
+      } catch(error) { db.exec("ROLLBACK"); throw error; }
     },
     async limit(id) {
       const key = digest(id + ":" + Math.floor(Date.now() / 3600000));
