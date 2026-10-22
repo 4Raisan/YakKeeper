@@ -15,7 +15,6 @@ import {
   Check,
   ChevronDown,
   ArrowRight,
-  GitBranch,
   Layers,
   Inbox,
   LogOut,
@@ -673,20 +672,14 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
                       </button>
                       <span className="status">{p.status}</span>
                     </div>
-                    <p className="summary">{p.summary}</p>
-                    <div className="project-meta">
-                      <span>
-                        {p.tags.split(",").filter(Boolean).join(" / ") ||
-                          p.category}
-                      </span>
+                    <div className="project-meta project-identity-row">
                       <a className="project-owner" href={"https://github.com/" + p.owner_login} target="_blank" rel="noreferrer" aria-label={"View @" + p.owner_login + " on GitHub"}><Github size={14} />@{p.owner_login}</a>
-                      {p.needs && (
-                        <span className="needs">
-                          <GitBranch size={12} />
-                          {p.needs}
-                        </span>
-                      )}
+                      {p.repo && <a className="project-repository" href={p.repo} target="_blank" rel="noreferrer" aria-label={"Open " + p.title + " repository on GitHub"}>Repository<ArrowUpRight size={15}/></a>}
                     </div>
+                    {p.needs && <div className="project-looking-for">
+                      <span>Looking for</span>
+                      <p>{p.needs}</p>
+                    </div>}
                     <div className="project-badges">
                       {p.beginner_friendly && <span>Beginner friendly</span>}
                       <span>
@@ -747,13 +740,6 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
                       </div>
                     )}
                     <div className="project-links">
-                      {p.repo && (
-                        <a href={p.repo} target="_blank" rel="noreferrer">
-                          <Github size={14} />
-                          Repository
-                          <ArrowUpRight size={12} />
-                        </a>
-                      )}
                       {p.demo && (
                         <a href={p.demo} target="_blank" rel="noreferrer">
                           Live demo
