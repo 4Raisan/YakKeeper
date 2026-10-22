@@ -87,3 +87,11 @@ input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px soli
 .compact-request .request-meta{margin-top:6px;font-size:11px;gap:8px 12px}.compact-request .request-meta time{margin-left:auto}.compact-request .request-preview{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin:10px 0 8px;max-width:none;font-size:14px;line-height:1.5;color:var(--ink);overflow-wrap:anywhere}
 .request-footer{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.application-details{min-width:0;flex:1}.application-details summary{width:fit-content;font-size:12px;color:var(--accent);cursor:pointer}.application-details>p{max-width:none;font-size:14px;color:var(--ink);line-height:1.5;overflow-wrap:anywhere}.application-details .acceptance-note{font-size:12px;color:var(--muted)}.notification-detail{display:block;margin-top:10px;color:var(--muted);font-size:11px}.block-applicant{font-size:12px;color:var(--muted);padding:0}.compact-request .application-links{margin-top:8px;gap:10px}.application-tabs{padding:16px 0 12px}.application-tabs button{padding:7px 12px;min-height:36px;font-size:14px}
 @media(max-width:650px){.compact-request{padding:12px}.request-top{align-items:flex-start;gap:8px}.compact-request .request-title{flex-direction:column;gap:4px}.compact-request .request-title strong{font-size:16px}.compact-request .request-meta time{flex-basis:auto;margin-left:auto}.request-status{max-width:120px}.compact-request .request-preview{font-size:14px}.compact-request .application-links{align-items:flex-start}}
+/* The complete upload surface activates the file input, including its help text. */
+.editor-dialog .banner-picker{padding:0;gap:0;align-items:stretch}
+.editor-dialog .banner-upload-bar{display:flex;align-items:center;gap:12px;flex:1;min-width:0;padding:12px;margin:0;font-size:15px}
+.editor-dialog .banner-upload-bar>div{display:flex;align-items:center;justify-content:space-between;gap:10px;flex:1;min-width:0}
+.editor-dialog .banner-upload-bar small{margin:0;font-size:12px}
+.editor-dialog .banner-picker>.text-button{position:relative;padding:12px;flex-shrink:0}
+.editor-dialog .banner-upload-bar:has(input:disabled){cursor:wait;opacity:.6}
+@media(max-width:650px){.editor-dialog .banner-upload-bar>div{align-items:flex-start;flex-direction:column;gap:4px}}

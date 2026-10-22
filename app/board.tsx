@@ -1108,9 +1108,10 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
                   <small>Name, description and language sync from GitHub.</small>
                 </div>
                 <div className="banner-picker">
+                  <label className="banner-upload banner-upload-bar">
                   {(editor.banner_data || (editor.banner_data !== null && editor.banner_url)) && <img className="banner-preview" src={editor.banner_data || editor.banner_url} alt="Banner preview" />}
                   <div>
-                    <label className="banner-upload">{bannerBusy ? "Preparing image…" : (editor.banner_data || (editor.banner_data !== null && editor.banner_url)) ? "Change banner" : "Add banner"}
+                    <span>{bannerBusy ? "Preparing image…" : (editor.banner_data || (editor.banner_data !== null && editor.banner_url)) ? "Change banner" : "Add banner"}</span>
                       <input type="file" accept="image/png,image/jpeg,image/webp" disabled={busy || bannerBusy} onChange={async e => {
                         const file = e.target.files?.[0]; e.target.value="";
                         if (!file) return;
@@ -1119,9 +1120,9 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
                         catch(error) {setFeedback((error as Error).message);}
                         finally {setBannerBusy(false);}
                       }} />
-                    </label>
                     <small>PNG, JPEG or WebP · cropped to 3:1</small>
                   </div>
+                  </label>
                   {(editor.banner_data || (editor.banner_data !== null && editor.banner_url)) && <button type="button" className="text-button" disabled={busy || bannerBusy} onClick={()=>setEditor({...editor,banner_data:null})}>Remove</button>}
                 </div>
                 <label>Looking for
