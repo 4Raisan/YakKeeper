@@ -103,3 +103,12 @@ input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px soli
 .delete-project p{font-size:13px;color:var(--muted);margin:8px 0 12px}
 .delete-project-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
 .danger-button{background:#ae3037;color:#fff;border-color:#ae3037}.danger-button:hover{background:#94262d;color:#fff;border-color:#94262d}
+
+/* Repository identity stays compact; collaboration needs get the visual priority. */
+.project-list .project-identity-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:4px}
+.project-list .project-identity-row .project-owner{border:0;padding-left:0;min-width:0}
+.project-repository{display:inline-flex;align-items:center;gap:5px;font-size:12px;white-space:nowrap;color:var(--muted)}
+.project-repository svg{color:var(--mint)}.project-repository:hover{color:var(--ink);text-decoration:underline}
+.project-looking-for{margin-top:14px;padding:11px 13px;border-left:3px solid var(--mint);border-radius:0 6px 6px 0;background:var(--mint-soft)}
+.project-looking-for>span{display:block;font-size:11px;font-weight:650;letter-spacing:.4px;color:var(--mint)}
+.project-looking-for>p{margin:5px 0 0;color:var(--ink);font-size:17px;font-weight:550;line-height:1.45;overflow-wrap:anywhere}
