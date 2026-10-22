@@ -102,4 +102,8 @@ Run `npm run typecheck`, `npm test`, `npm run build`, then `npm start`.
 
 Tests exercise actual API handlers and persistent local SQLite data, two-account ownership and privacy, review status, reporting, blocking, validation, origin checks and stale-response protection. GitHub security/API tests use mocked transport. Live Supabase transactions check application/report/block storage and anonymous privilege denial; fixtures are rolled back.
 
-Real OAuth sign-in still needs provider credentials and the server secret. Real WhatsApp delivery, public traffic performance and hosted deployment remain unverified. Local sandbox data is isolated from Supabase live records.
+Fresh installations need OAuth provider credentials and the server secret. Automated tests do not exercise real OAuth or WhatsApp delivery; verify those separately in the target deployment. Local sandbox data is isolated from Supabase live records.
+
+## Appearance
+
+The horned YK circle is the shared website, favicon and documentation identity. Light/dark mode follows the system on first visit and remembers an explicit choice. Charcoal and forest-green surfaces keep project content clear; background signals stop under reduced-motion preference. See [design notes](docs/design.md) for sources and decisions.
