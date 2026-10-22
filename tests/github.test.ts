@@ -85,3 +85,34 @@ test("GitHub descriptions may be absent or short without blocking publication", 
   assert.deepEqual(repositoryDisplay(repo), {title:"Tiny",summary:"Hi",description:"Hi",tags:"Go"});
   assert.match(repositoryDisplay({...repo,description:"",language:""}).description,/Explore Tiny on GitHub/);
 });
+
+test("linked identities use GitHub even when another provider comes first",async t=>{
+  process.env.NEXT_PUBLIC_SUPABASE_URL="https://identity-test.supabase.co";
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="fake";
+  process.env.SUPABASE_SECRET_KEY="fake";
+  const profile={id:"55555555-5555-4555-8555-555555555555",github_id:"812345",github_login:"identity-builder",avatar_url:"",name:"Builder",role:"collaborator"};
+  let providerCalls=0;
+  t.mock.method(globalThis,"fetch",async(input:RequestInfo|URL,init?:RequestInit)=>{
+    const request=new Request(input,init);
+    if(request.url.includes("/auth/v1/user")) return Response.json({id:profile.id,identities:[{provider:"google",identity_data:{sub:"999"}},{provider:"github",identity_data:{sub:"812345"}}],user_metadata:{provider_id:"999",role:"owner"}});
+    if(request.url.includes("api.github.com/user/812345")){providerCalls++;return Response.json({id:812345,login:profile.github_login,name:"Builder",avatar_url:""});}
+    if(request.url.includes("/rest/v1/yak_profiles"))return Response.json(profile);
+    throw Error("Unexpected identity request");
+  });
+  const user=await identity(new Request("https://yakkeeper.example/api/hub",{headers:{authorization:"Bearer test-token"}}),false);
+  assert.equal(user?.github_id,"812345");assert.equal(user?.role,"collaborator");assert.equal(providerCalls,1);
+});
+
+test("Google-only identities cannot publish and rejected sessions cannot use GitHub lookup",async t=>{
+  process.env.NEXT_PUBLIC_SUPABASE_URL="https://identity-test.supabase.co";
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="fake";
+  process.env.SUPABASE_SECRET_KEY="fake";
+  let unauthorized=false;
+  t.mock.method(globalThis,"fetch",async(input:RequestInfo|URL,init?:RequestInit)=>{
+    const request=new Request(input,init);assert.ok(request.url.includes("/auth/v1/user"));
+    return unauthorized ? Response.json({msg:"Invalid token"},{status:401}) : Response.json({id:"id",identities:[{provider:"google",identity_data:{sub:"812345"}}],user_metadata:{provider_id:"812345",provider:"github"}});
+  });
+  const request=new Request("https://yakkeeper.example/api/hub",{headers:{authorization:"Bearer test-token"}});
+  await assert.rejects(()=>identity(request,false),/Connect your GitHub/);
+  unauthorized=true;await assert.rejects(()=>identity(request,false),/sign in again/);
+});
