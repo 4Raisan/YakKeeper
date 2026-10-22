@@ -10,6 +10,7 @@ import {
 import {
   ArrowUpRight,
   Plus,
+  Star,
   Search,
   X,
   Check,
@@ -883,6 +884,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
       </main>
       <footer>
         <span>YakKeeper © {copyrightYear}</span>
+        <a className="github-star-button" href="https://github.com/4Raisan/YakKeeper" target="_blank" rel="noopener noreferrer"><Star size={15} aria-hidden="true"/>Star on GitHub</a>
         <span>Where projects meet their next contributors.</span>
       </footer>
       {modal && (
