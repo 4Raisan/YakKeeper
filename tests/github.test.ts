@@ -78,3 +78,10 @@ test("editable metadata cannot claim a GitHub identity or administrator role", a
     /Connect your GitHub/,
   );
 });
+
+test("GitHub descriptions may be absent or short without blocking publication", async () => {
+  const {repositoryDisplay} = await import("../lib/hub-github.ts");
+  const repo = {name:"Tiny",description:"Hi",language:"Go"} as unknown as import("../lib/hub-types.ts").Repo;
+  assert.deepEqual(repositoryDisplay(repo), {title:"Tiny",summary:"Hi",description:"Hi",tags:"Go"});
+  assert.match(repositoryDisplay({...repo,description:"",language:""}).description,/Explore Tiny on GitHub/);
+});

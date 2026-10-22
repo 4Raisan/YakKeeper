@@ -72,6 +72,9 @@ test("persistent local platform: publishing, two users, applications, privacy, m
   );
   const initial = await invoke();
   assert.equal(initial.data.projects.length, 1);
+  assert.equal(initial.data.projects[0].title, "yakkeeper-sandbox");
+  assert.equal(initial.data.projects[0].tags, "TypeScript");
+  assert.equal(initial.data.projects[0].summary, "A sample repository for trying the local publishing flow.");
   const id = initial.data.projects[0].id;
   assert.equal(
     (await invoke({ action: "saveProject", project }, a.cookie)).status,

@@ -9,7 +9,7 @@ A shared project board for finding teammates, practising skills and contributing
 ## Use it
 
 - **Explore:** search projects, stacks and people; filter for beginner-friendly or open projects.
-- **My projects:** choose a public GitHub repository, add details, publish, edit or archive it.
+- **My projects:** choose a public GitHub repository, set collaboration details, publish, edit or archive it. Name, About description and primary language are imported from GitHub and refreshed on save; they are not editable here.
 - **Applications:** owners review received proposals; applicants track sent requests.
 - **Profile:** skills, interests, availability and timezone.
 - **Reports:** administrator review. Users can report listings and block new applications from an account.

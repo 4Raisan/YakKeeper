@@ -30,7 +30,7 @@ test("publishing requires a repository and bounded valid project fields", () => 
   for (const change of [
     { repo_id: 0 },
     { repo_id: -1 },
-    { title: "x".repeat(121) },
+
     { visibility: "admin" },
     { status: "unknown" },
     { needs: "" },
@@ -60,4 +60,12 @@ test("applications use server identity and validate message/honeypot", () => {
       submissionSchema.safeParse({ ...value, ...change }).success,
       false,
     );
+});
+
+test("repository display fields cannot be supplied through collaboration inputs", () => {
+  const parsed = projectSchema.parse({...valid, title:"Forged title", tags:"Forged skills"});
+  assert.equal("title" in parsed, false);
+  assert.equal("tags" in parsed, false);
+  assert.equal("summary" in parsed, false);
+  assert.equal("description" in parsed, false);
 });

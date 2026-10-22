@@ -16,7 +16,7 @@ import {
   type Row,
 } from "../../../lib/hub-store.ts";
 import { identity, publicProfile } from "../../../lib/hub-auth.ts";
-import { publicRepos, ownedRepo, github } from "../../../lib/hub-github.ts";
+import { publicRepos, ownedRepo, github, repositoryDisplay } from "../../../lib/hub-github.ts";
 import { sampleRepos } from "../../../lib/hub-demo.ts";
 import type { Repo } from "../../../lib/hub-types.ts";
 export const runtime = "nodejs";
@@ -258,6 +258,7 @@ export async function POST(request: Request) {
         throw new HttpError(400, "Archived repositories cannot be published.");
       const data = {
         ...input,
+        ...repositoryDisplay(repo),
         repo: repo.html_url,
         owner_name: user.name,
         owner_login: user.github_login,

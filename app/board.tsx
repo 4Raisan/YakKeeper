@@ -993,7 +993,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
       {modal && (
         <div className="modal-backdrop" onClick={close}>
           <section
-            className="modal"
+            className={"modal" + (modal === "login" ? " login-dialog" : "")}
             ref={dialog}
             role="dialog"
             aria-modal="true"
@@ -1027,6 +1027,12 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
               }
             }}
           >
+            {modal === "login" && <div className="login-brand-banner">
+              <div className="login-brand-lockup">
+                <Image src="/brand/yakkeeper.webp" alt="" width={76} height={76} />
+                <div><span>YakKeeper<span className="brand-period">.</span></span><p>Where projects meet their next contributors.</p></div>
+              </div>
+            </div>}
             <div className="modal-heading">
               <h2>
                 {modal === "repos"
@@ -1037,7 +1043,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
                       : "Make room for a teammate"
                     : modal === "report"
                       ? "Report project"
-                      : "Find your next teammate."}
+                      : "Find your people. Build together."}
               </h2>
               <button
                 className="icon-button"
@@ -1049,26 +1055,17 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
             </div>
             {modal === "login" && (
               <div className="login-panel">
-                <Image
-                  src="/brand/yakkeeper.webp"
-                  alt="YakKeeper"
-                  width={80}
-                  height={80}
-                />
-                <p>Where projects meet their next contributors.</p>
+                <p className="login-intro">Bring a project. Find a teammate. Start building.</p>
                 <button
                   className="button primary full"
                   disabled={busy || hub.mode !== "live"}
                   onClick={signIn}
                 >
                   <Github size={18} />
-                  Continue with GitHub
+                  {busy ? "Connecting to GitHub…" : "Continue with GitHub"}
                   <ArrowUpRight size={14} />
                 </button>
-                <small>
-                  Sign in on GitHub. YakKeeper never receives your password or
-                  requests repository write access.
-                </small>
+                <small className="login-trust"><ShieldCheck size={16} /><span>GitHub handles sign-in.<br />No password sharing or repository write access.</span></small>
                 {hub.mode !== "live" && (
                   <p className="setup-note">
                     Real GitHub sign-in needs OAuth and server configuration.
@@ -1194,7 +1191,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
                     await action({
                       action: "saveProject",
                       id: editing || undefined,
-                      project: editor,
+                      project: Object.fromEntries(Object.entries(editor).filter(([key]) => !["title", "summary", "description", "tags"].includes(key))),
                     })
                   ) {
                     setModal("");
@@ -1206,108 +1203,42 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
                   <Github size={15} />
                   {repoLabel}
                 </div>
-                {(
-                  [
-                    "title",
-                    "summary",
-                    "description",
-                    "tags",
-                    "needs",
-                    "roadmap",
-                    "demo",
-                    "time_commitment",
-                  ] as const
-                ).map((key) => (
-                  <label key={key}>
-                    {
-                      {
-                        title: "Project name",
-                        summary: "One-line summary",
-                        description: "About the project",
-                        tags: "Stack / skills",
-                        needs: "Looking for",
-                        roadmap: "Next steps",
-                        demo: "Live demo URL (optional)",
-                        time_commitment: "Time commitment",
-                      }[key]
-                    }
-                    {["description", "roadmap"].includes(key) ? (
-                      <textarea
-                        rows={3}
-                        required={key === "description"}
-                        minLength={key === "description" ? 20 : undefined}
-                        maxLength={key === "description" ? 10000 : 3000}
-                        value={editor[key]}
-                        onChange={(e) =>
-                          setEditor({ ...editor, [key]: e.target.value })
-                        }
-                      />
-                    ) : (
-                      <input
-                        required={!["tags", "roadmap", "demo"].includes(key)}
-                        type={key === "demo" ? "url" : "text"}
-                        minLength={
-                          key === "summary"
-                            ? 10
-                            : key === "needs"
-                              ? 3
-                              : undefined
-                        }
-                        maxLength={
-                          key === "summary"
-                            ? 240
-                            : key === "title"
-                              ? 120
-                              : key === "tags"
-                                ? 200
-                                : key === "needs"
-                                  ? 1000
-                                  : key === "time_commitment"
-                                    ? 100
-                                    : 500
-                        }
-                        placeholder={
-                          key === "needs"
-                            ? "Frontend, design, documentation…"
-                            : undefined
-                        }
-                        value={editor[key]}
-                        onChange={(e) =>
-                          setEditor({ ...editor, [key]: e.target.value })
-                        }
-                      />
-                    )}
-                  </label>
-                ))}
+                <div className="repo-preview">
+                  <strong>{editor.title}</strong>
+                  <p>{editor.summary || "Add a description in GitHub’s About section."}</p>
+                  {editor.tags && <span>{editor.tags}</span>}
+                  <small>Name, description and language come from GitHub and refresh when you save.</small>
+                </div>
+                <label>Looking for
+                  <input required minLength={3} maxLength={1000} placeholder="Frontend, design, documentation…" value={editor.needs} onChange={e => setEditor({...editor, needs:e.target.value})} />
+                </label>
+                <label>Next steps <span className="optional-label">optional</span>
+                  <textarea rows={2} maxLength={3000} value={editor.roadmap} onChange={e => setEditor({...editor, roadmap:e.target.value})} />
+                </label>
                 <div className="form-pair">
-                  {(["category", "status", "visibility"] as const).map(
-                    (key) => (
-                      <label key={key}>
-                        {key}
-                        <select
-                          value={editor[key]}
-                          onChange={(e) =>
-                            setEditor({ ...editor, [key]: e.target.value })
-                          }
-                        >
-                          {(key === "category"
-                            ? [
-                                "Web apps",
-                                "AI & research",
-                                "Tools",
-                                "Design",
-                                "Other",
-                              ]
-                            : key === "status"
-                              ? ["In progress", "Completed", "Paused"]
-                              : ["public", "private", "archived"]
-                          ).map((s) => (
-                            <option key={s}>{s}</option>
-                          ))}
-                        </select>
-                      </label>
-                    ),
-                  )}
+                  <label>Live demo URL <span className="optional-label">optional</span>
+                    <input type="url" maxLength={500} value={editor.demo} onChange={e => setEditor({...editor, demo:e.target.value})} />
+                  </label>
+                  <label>Time commitment
+                    <input required maxLength={100} value={editor.time_commitment} onChange={e => setEditor({...editor, time_commitment:e.target.value})} />
+                  </label>
+                </div>
+                <fieldset className="project-type-picker">
+                  <legend>Project type</legend>
+                  <div>{["Web apps", "AI & research", "Tools", "Design", "Other"].map(type => (
+                    <label key={type} className={editor.category === type ? "selected" : ""}>
+                      <input type="radio" name="project-type" value={type} checked={editor.category === type} onChange={() => setEditor({...editor,category:type})} />
+                      {type}
+                    </label>
+                  ))}</div>
+                </fieldset>
+                <div className="form-pair">
+                  <label>Project status
+                    <select value={editor.status} onChange={e => setEditor({...editor,status:e.target.value})}>{["In progress","Completed","Paused"].map(value => <option key={value}>{value}</option>)}</select>
+                  </label>
+                  <label>Who can see it
+                    <select value={editor.visibility} onChange={e => setEditor({...editor,visibility:e.target.value})}><option value="public">Everyone</option><option value="private">Only me</option><option value="archived">Archived</option></select>
+                  </label>
                 </div>
                 <label className="checkbox-row">
                   <input

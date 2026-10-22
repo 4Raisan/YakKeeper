@@ -56,3 +56,14 @@ export async function ownedRepo(repoId: number, githubId: string) {
     );
   return repo;
 }
+
+// Display metadata is owned by GitHub, never by the submitted editor payload.
+export function repositoryDisplay(repo: Repo) {
+  const description = repo.description?.trim() || `Explore ${repo.name} on GitHub.`;
+  return {
+    title: repo.name.slice(0, 120),
+    summary: description.slice(0, 240),
+    description: description.slice(0, 10000),
+    tags: (repo.language || "").slice(0, 200),
+  };
+}

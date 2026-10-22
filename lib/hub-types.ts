@@ -110,12 +110,8 @@ const url = z
   }, "Use an HTTP(S) URL.");
 export const projectSchema = z.object({
   repo_id: z.number().int().positive(),
-  title: z.string().trim().min(1).max(120),
-  summary: z.string().trim().min(10).max(240),
-  description: z.string().trim().min(20).max(10000),
   category: z.enum(["Web apps", "AI & research", "Tools", "Design", "Other"]),
   status: z.enum(["In progress", "Completed", "Paused"]),
-  tags: z.string().trim().max(200),
   needs: z.string().trim().min(3).max(1000),
   roadmap: z.string().trim().max(3000),
   demo: url,
