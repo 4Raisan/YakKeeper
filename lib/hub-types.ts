@@ -32,6 +32,8 @@ export type Project = {
   contributions_open: boolean;
   beginner_friendly: boolean;
   time_commitment: string;
+  banner_path?: string;
+  banner_url?: string;
   updated_at: string;
   created_at: string;
 };
@@ -94,6 +96,8 @@ export const blankProject = {
   visibility: "public",
   contributions_open: true,
   beginner_friendly: true,
+  banner_url: "",
+  banner_data: undefined as string | null | undefined,
 };
 const url = z
   .string()
@@ -117,6 +121,7 @@ export const projectSchema = z.object({
   visibility: z.enum(["public", "private", "archived"]),
   contributions_open: z.boolean(),
   beginner_friendly: z.boolean(),
+  banner_data: z.string().max(180000).nullable().optional(),
 });
 export const submissionSchema = z.object({
   project_id: z.string().uuid(),

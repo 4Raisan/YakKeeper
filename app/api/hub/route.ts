@@ -19,10 +19,11 @@ import { identity, publicProfile } from "../../../lib/hub-auth.ts";
 import { publicRepos, ownedRepo, github, repositoryDisplay } from "../../../lib/hub-github.ts";
 import { sampleRepos } from "../../../lib/hub-demo.ts";
 import type { Repo } from "../../../lib/hub-types.ts";
+import { withBanners, saveBanner, removeBanner } from "../../../lib/hub-banners.ts";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 async function boundedJson(request: Request) {
-  if (Number(request.headers.get("content-length") || 0) > 24000)
+  if (Number(request.headers.get("content-length") || 0) > 210000)
     throw new HttpError(413, "Request too large.");
   const reader = request.body?.getReader();
   if (!reader) throw new HttpError(400, "Missing request body.");
@@ -33,7 +34,7 @@ async function boundedJson(request: Request) {
       const chunk = await reader.read();
       if (chunk.done) break;
       size += chunk.value.byteLength;
-      if (size > 24000) { await reader.cancel(); throw new HttpError(413, "Request too large."); }
+      if (size > 210000) { await reader.cancel(); throw new HttpError(413, "Request too large."); }
       text += decoder.decode(chunk.value, {stream: true});
     }
     return JSON.parse(text + decoder.decode());
@@ -168,7 +169,7 @@ export async function GET(request: Request) {
     return reply({
       configured: true,
       mode: local ? "local" : "live",
-      projects,
+      projects: await withBanners(projects,local),
       user: user ? publicProfile(user) : null,
       inbox: inbox.map(application),
       sent: sent.map(application),
@@ -220,7 +221,7 @@ export async function POST(request: Request) {
       return reply({ ok: true });
     }
     if (body.action === "saveProject") {
-      const input = projectSchema.parse(body.project);
+      const {banner_data,...input} = projectSchema.parse(body.project);
       let existing: Row | undefined;
       if (body.id) {
         existing = (
@@ -256,6 +257,11 @@ export async function POST(request: Request) {
       } else repo = await ownedRepo(input.repo_id, user.github_id);
       if (repo.archived)
         throw new HttpError(400, "Archived repositories cannot be published.");
+      let newBanner: string | undefined;
+      if (typeof banner_data === "string") {
+        if (!(await db.limit("banner:" + user.id))) throw new HttpError(429,"Hourly banner upload limit reached.");
+        newBanner = await saveBanner(banner_data,user.id,local);
+      }
       const data = {
         ...input,
         ...repositoryDisplay(repo),
@@ -264,9 +270,16 @@ export async function POST(request: Request) {
         owner_login: user.github_login,
         updated_at: new Date().toISOString(),
         personal: false,
+        ...(banner_data !== undefined ? {banner_path:newBanner || ""} : {}),
       };
-      if (existing) await db.patch("yak_projects", String(existing.id), data);
-      else await db.save("yak_projects", { ...data, owner_id: user.id });
+      try {
+        if (existing) await db.patch("yak_projects", String(existing.id), data);
+        else await db.save("yak_projects", { ...data, owner_id: user.id });
+      } catch (error) {
+        if (newBanner) await removeBanner(newBanner,local);
+        throw error;
+      }
+      if (banner_data !== undefined && existing?.banner_path) await removeBanner(String(existing.banner_path),local);
       return reply({ ok: true });
     }
     if (body.action === "submit") {

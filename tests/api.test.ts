@@ -50,7 +50,7 @@ test("persistent local platform: publishing, two users, applications, privacy, m
     ).status,
     403,
   );
-  assert.equal((await invoke({action: "demoLogin", user_id: owner, oversized: "x".repeat(24001)})).status,413);
+  assert.equal((await invoke({action: "demoLogin", user_id: owner, oversized: "x".repeat(210001)})).status,413);
   const a = await invoke({ action: "demoLogin", user_id: owner });
   assert.ok(a.cookie);
   assert.equal(a.status, 200);
@@ -76,6 +76,20 @@ test("persistent local platform: publishing, two users, applications, privacy, m
   assert.equal(initial.data.projects[0].tags, "TypeScript");
   assert.equal(initial.data.projects[0].summary, "A sample repository for trying the local publishing flow.");
   const id = initial.data.projects[0].id;
+  const banner = "data:image/webp;base64,UklGRjAAAABXRUJQVlA4ICQAAABwAQCdASoDAAEAAUAmJZgCsAGIQAD+6tR/7g/ph/phnw8AAAA=";
+  assert.equal((await invoke({action:"saveProject",id,project:{...project,banner_data:banner}},b.cookie)).status,403);
+  assert.equal((await invoke({action:"saveProject",id,project:{...project,banner_data:"data:image/webp;base64,PHNjcmlwdD4="}},a.cookie)).status,400);
+  assert.equal((await invoke({action:"saveProject",id,project:{...project,banner_data:banner}},a.cookie)).status,200);
+  assert.equal((await invoke()).data.projects[0].banner_url,banner);
+  assert.equal("banner_path" in (await invoke()).data.projects[0],false);
+  assert.equal((await invoke({action:"saveProject",id,project:{...project,visibility:"private"}},a.cookie)).status,200);
+  assert.equal((await invoke()).data.projects.length,0);
+  assert.equal((await invoke(undefined,b.cookie)).data.projects.length,0);
+  assert.equal((await invoke(undefined,a.cookie)).data.projects[0].banner_url,banner);
+  assert.equal((await invoke({action:"saveProject",id,project:{...project,banner_data:banner}},a.cookie)).status,200);
+  assert.equal((await invoke()).data.projects[0].banner_url,banner);
+  assert.equal((await invoke({action:"saveProject",id,project:{...project,banner_data:null}},a.cookie)).status,200);
+  assert.equal((await invoke()).data.projects[0].banner_url,"");
   assert.equal(
     (await invoke({ action: "saveProject", project }, a.cookie)).status,
     409,
