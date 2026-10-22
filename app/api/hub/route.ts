@@ -227,6 +227,16 @@ export async function POST(request: Request) {
       );
       return reply({ ok: true });
     }
+    if (body.action === "deleteProject") {
+      const id = z.string().uuid().parse(body.id);
+      const project = (await db.find("yak_projects",{id},1))[0];
+      if (!project || project.owner_id !== user.id)
+        throw new HttpError(403,"You can only delete your own YakKeeper projects.");
+      if (body.confirm !== true) throw new HttpError(400,"Confirm deletion before continuing.");
+      await db.remove("yak_projects",id);
+      if (project.banner_path) await removeBanner(String(project.banner_path),local);
+      return reply({ok:true});
+    }
     if (body.action === "saveProject") {
       const {banner_data,...input} = projectSchema.parse(body.project);
       let existing: Row | undefined;
