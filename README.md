@@ -11,7 +11,6 @@ A shared project board for finding teammates, practising skills and contributing
 - **Explore:** search projects, stacks and people; filter for beginner-friendly or open projects.
 - **My projects:** choose a public GitHub repository, set collaboration details, publish, edit or archive it. Name, About description and primary language are imported from GitHub and refreshed on save; they are not editable here.
 - **Applications:** owners review received proposals; applicants track sent requests.
-- **Profile:** skills, interests, availability and timezone.
 - **Reports:** administrator review. Users can report listings and block new applications from an account.
 
 Project status, listing visibility and accepting applications are separate settings. Accepting an application does not grant GitHub access; people agree next steps through GitHub themselves.
@@ -28,7 +27,7 @@ Public metadata is cached for five minutes with a bounded cache. Ownership and v
 
 Run `npm ci`, copy `.env.example` to `.env.local`, and set `YAKKEEPER_LOCAL_DEMO=true`. Then run `npm run dev` and open http://127.0.0.1:3000.
 
-Choose **Try it** and a sandbox account. Add a repository, switch accounts, apply, switch back and review. Data persists in ignored `.local/yakkeeper.sqlite`, including across server restarts. The sample repository allows testing when GitHub is unavailable; other picker entries are actual public GitHub metadata.
+Choose **Try it**, then **Load test workspace** for four personas, four sample projects and eight applications. Switch between 4Raisan and Maya as owners, and Asha and Dev as applicants. Loading again preserves existing records and reviews. Choose a sandbox account. Add a repository, switch accounts, apply, switch back and review. Data persists in ignored `.local/yakkeeper.sqlite`, including across server restarts. The sample repository allows testing when GitHub is unavailable; other picker entries are actual public GitHub metadata.
 
 Sandbox identity is **not GitHub verification**. Sessions use random HttpOnly, SameSite cookies. Sandbox mode requires explicit server configuration and a loopback host; it is disabled on detected Vercel, Render and Railway deployments. Never enable it on a publicly reachable server. Node 22 labels its built-in SQLite module experimental; SQLite is used for local testing only.
 
@@ -94,16 +93,16 @@ Apply the `project_banners` migration before deploying this version. It adds `ba
 Project type remains a dropdown. Time commitment is no longer collected or displayed; the old database column is retained for compatibility. Repository name, description and primary language come from GitHub. Optional next steps and demo links are under More details.
 ## Optional WhatsApp
 
-Meta alerts are supported for applications to the administrator's own projects, not automatic alerts to every publisher. Configure the optional `META_*` / `WHATSAPP_*` fields, an approved three-parameter template (kind, project title, inbox URL), and `APP_URL`. Requests are saved before alert delivery is attempted. Delivery webhooks and automatic retries are not implemented.
+Meta alerts are supported for applications to the administrator's own projects, not automatic alerts to every publisher. Delivery defaults to disabled. Set `WHATSAPP_ENABLED=true` only after configuring the optional `META_*` / `WHATSAPP_*` fields, an approved three-parameter template (kind, project title, inbox URL), and `APP_URL`. Requests are saved before alert delivery is attempted. Delivery webhooks and automatic retries are not implemented. Meta acceptance is not delivery confirmation. Automated template alerts are not guaranteed free. See [setup and limits](docs/whatsapp.md).
 
 ## Validation and limits
 
 Run `npm run typecheck`, `npm test`, `npm run build`, then `npm start`.
 
-Tests exercise actual API handlers and persistent local SQLite data, two-account ownership and privacy, review status, reporting, blocking, validation, origin checks and stale-response protection. GitHub security/API tests use mocked transport. Live Supabase transactions check application/report/block storage and anonymous privilege denial; fixtures are rolled back.
+Tests exercise actual API handlers and persistent local SQLite data, four-persona ownership and privacy, review status, reporting, blocking, validation, origin checks and stale-response protection. GitHub security/API tests use mocked transport. The current multi-persona run uses isolated local SQLite. Real multi-account OAuth, live Supabase behavior and WhatsApp delivery require separate deployment checks.
 
 Fresh installations need OAuth provider credentials and the server secret. Automated tests do not exercise real OAuth or WhatsApp delivery; verify those separately in the target deployment. Local sandbox data is isolated from Supabase live records.
 
 ## Appearance
 
-The horned YK circle is the shared website, favicon and documentation identity. Light/dark mode follows the system on first visit and remembers an explicit choice. Charcoal and forest-green surfaces keep project content clear; background signals stop under reduced-motion preference. See [design notes](docs/design.md) for sources and decisions.
+The horned YK circle is the shared website, favicon and documentation identity. Light/dark mode follows the system on first visit and remembers an explicit choice. Neutral black surfaces, blue actions and restrained mint details distinguish dark mode; light mode uses pale blue surfaces and colored covers; background signals stop under reduced-motion preference. See [design notes](docs/design.md) for sources and decisions.

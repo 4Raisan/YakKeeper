@@ -18,16 +18,16 @@ These are established product/design-system references, not a ranking or a claim
 
 | Role | Dark | Light |
 | --- | --- | --- |
-| Page | `#111512` | `#f4f6f1` |
-| Card/dialog | `#1b211d` | `#ffffff` |
-| Primary text | `#f1f5f1` | `#1e2921` |
-| Secondary text | `#b4c1b7` | `#536357` |
-| Action | `#286440` | `#2d6843` |
+| Page | `#08090b` | `#eaf1fb` |
+| Card/dialog | `#121416` | `#ffffff` |
+| Primary text | `#f5f6f7` | `#22314a` |
+| Secondary text | `#bfc4cc` | `#51617a` |
+| Action | `#2863b8` | `#235fb5` |
 | Action text | `#ffffff` | `#ffffff` |
-| Accent text | `#a2dcb3` | `#275e3b` |
-| Skill/help detail | `#8bcfa2` | `#286441` |
+| Accent text | `#a7c9ff` | `#225aab` |
+| Skill/help detail | `#a0d6c0` | `#1a735b` |
 
-The black-and-white badge anchors the identity. Forest green is the action color; softer green is reserved for selected states and collaboration details. Status badges use tinted surfaces. Covers stay colorful in both modes.
+The black-and-white badge anchors the identity. Blue is the action color; mint is reserved for collaboration details and small identity accents. Status badges use tinted surfaces. Covers stay colorful in both modes.
 
 ## Motion and behavior
 
@@ -37,7 +37,7 @@ The initial theme is applied before rendering content to avoid a flash. An expli
 
 ## Validation
 
-The nine measured palette pairs (primary/secondary text, selected badge text, action text, mint detail) pass 4.5:1 contrast, using the current charcoal and forest-green palette. This is a palette check, not a claim of a full WCAG audit. Browser checks cover both modes, editor rendering, reload persistence, moving signals, and 390-pixel layout without horizontal page overflow. Reduced-motion behavior is defined in CSS; device-level preference emulation was unavailable in the browser tool.
+The six measured primary-text, secondary-text and action-text pairs pass 4.5:1 contrast in the current neutral black and blue palette. This is a palette check, not a claim of a full WCAG audit. Browser checks cover both modes, editor rendering, reload persistence, moving signals, and 390-pixel layout without horizontal page overflow. Reduced-motion behavior is defined in CSS; device-level preference emulation was unavailable in the browser tool.
 
 
 The final selected logo is concept 19: concept 15's horned YK inside a black circle, with fine green speckles. White is opaque inside the mark so it remains readable on dark pages. Decorative texture naturally recedes at favicon sizes. Existing filenames are retained for README and GitHub assets; favicon URLs are versioned to refresh cached artwork. Generic repository covers use project initials instead of a repeated mascot.
