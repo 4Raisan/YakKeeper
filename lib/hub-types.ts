@@ -94,7 +94,6 @@ export const blankProject = {
   visibility: "public",
   contributions_open: true,
   beginner_friendly: true,
-  time_commitment: "2–4 hours / week",
 };
 const url = z
   .string()
@@ -118,7 +117,6 @@ export const projectSchema = z.object({
   visibility: z.enum(["public", "private", "archived"]),
   contributions_open: z.boolean(),
   beginner_friendly: z.boolean(),
-  time_commitment: z.string().trim().min(1).max(100),
 });
 export const submissionSchema = z.object({
   project_id: z.string().uuid(),

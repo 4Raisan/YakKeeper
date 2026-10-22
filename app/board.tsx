@@ -784,7 +784,6 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
                           ? "Open to teammates"
                           : "Requests closed"}
                       </span>
-                      <span>{p.time_commitment}</span>
                       {view === "my" && <span>{p.visibility}</span>}
                     </div>
                   </div>
@@ -1219,19 +1218,10 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
                   <label>Live demo URL <span className="optional-label">optional</span>
                     <input type="url" maxLength={500} value={editor.demo} onChange={e => setEditor({...editor, demo:e.target.value})} />
                   </label>
-                  <label>Time commitment
-                    <input required maxLength={100} value={editor.time_commitment} onChange={e => setEditor({...editor, time_commitment:e.target.value})} />
+                  <label>Project type
+                    <select value={editor.category} onChange={e => setEditor({...editor,category:e.target.value})}>{["Web apps", "AI & research", "Tools", "Design", "Other"].map(type => <option key={type}>{type}</option>)}</select>
                   </label>
                 </div>
-                <fieldset className="project-type-picker">
-                  <legend>Project type</legend>
-                  <div>{["Web apps", "AI & research", "Tools", "Design", "Other"].map(type => (
-                    <label key={type} className={editor.category === type ? "selected" : ""}>
-                      <input type="radio" name="project-type" value={type} checked={editor.category === type} onChange={() => setEditor({...editor,category:type})} />
-                      {type}
-                    </label>
-                  ))}</div>
-                </fieldset>
                 <div className="form-pair">
                   <label>Project status
                     <select value={editor.status} onChange={e => setEditor({...editor,status:e.target.value})}>{["In progress","Completed","Paused"].map(value => <option key={value}>{value}</option>)}</select>
