@@ -81,10 +81,17 @@ Real OAuth and a hosted deployment have not yet been verified. The last local se
 
 For an initial non-commercial trial, Vercel Hobby and Supabase Free can have a $0 base hosting cost within their limits. Supabase Free currently includes 500 MB database storage and 5 GB egress and may pause after a week of low activity. Supabase Pro starts at $25/month; Vercel Pro currently lists $20/month, before extra usage, tax, domains or optional messaging. Existing Supabase organization projects can affect the bill. [Supabase pricing](https://supabase.com/pricing), [Vercel pricing](https://vercel.com/pricing).
 
-This app stores text records and links to repositories/demos, so it does not need video storage, a separate chat server, a queue worker or a GPU. Actual capacity depends on active browsing time, request volume and database queries; account count alone is not a capacity measurement. Each continuously visible tab refreshes roughly 60 times per hour, plus focus and action refreshes. Before a large public launch, load-test the API, review query plans and pagination beyond the current limits, and add delivery retries only if reliable alerts become a requirement.
+This app stores text records, small project banners and links to repositories/demos, so it does not need video storage, a separate chat server, a queue worker or a GPU. Actual capacity depends on active browsing time, request volume and database queries; account count alone is not a capacity measurement. Each continuously visible tab refreshes roughly 60 times per hour, plus focus and action refreshes. Before a large public launch, load-test the API, review query plans and pagination beyond the current limits, and add delivery retries only if reliable alerts become a requirement.
 
 Application tables have RLS enabled, client privileges revoked and server-only access. API routes check identity and ownership. Contribution applications are unique per account/project. Submissions and reports are rate limited. Moderators can archive reported listings; owners cannot bypass that archive by republishing.
 
+## Project banners
+
+Project owners can add, replace or remove a cover while publishing or editing. PNG, JPEG and WebP inputs up to 8 MB are cropped to 3:1 and converted in the browser to a 1200 × 400 WebP of at most 128 KiB. Images are sent only when the project is saved. No Vercel Blob is used.
+
+Apply the `project_banners` migration before deploying this version. It adds `banner_path` and a private Supabase Storage bucket. The server verifies GitHub repository ownership before uploading, allows five uploads per user per hour, and returns one-hour signed image URLs only for public listings or the owner's private listings. Failed saves clean up new uploads; replacement/removal cleans up the previous object. Refreshing the board renews signed links. The local sandbox uses its isolated SQLite store instead of cloud storage.
+
+Project type remains a dropdown. Time commitment is no longer collected or displayed; the old database column is retained for compatibility. Repository name, description and primary language come from GitHub. Optional next steps and demo links are under More details.
 ## Optional WhatsApp
 
 Meta alerts are supported for applications to the administrator's own projects, not automatic alerts to every publisher. Configure the optional `META_*` / `WHATSAPP_*` fields, an approved three-parameter template (kind, project title, inbox URL), and `APP_URL`. Requests are saved before alert delivery is attempted. Delivery webhooks and automatic retries are not implemented.
