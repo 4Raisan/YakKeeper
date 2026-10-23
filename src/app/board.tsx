@@ -22,6 +22,7 @@ import {
   ShieldCheck,
   Flag,
 } from "lucide-react";
+import TaskBoard from "./task-board";
 import ProjectArt from "./project-art";
 import ThemeToggle from "./theme-toggle";
 import {demoAccounts} from "@/lib/hub-demo";
@@ -65,6 +66,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
     [editing, setEditing] = useState(""),
     [editor, setEditor] = useState({ ...blankProject }),
     [repoLabel, setRepoLabel] = useState("");
+  const [boardProject, setBoardProject] = useState<Project | null>(null);
   const [bannerBusy,setBannerBusy] = useState(false);
   const [confirmDelete,setConfirmDelete] = useState(false);
   const [repos, setRepos] = useState<Repo[]>([]),
@@ -181,6 +183,8 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
     return () => document.removeEventListener("keydown", shortcut);
   }, [modal]);
   useEffect(() => {
+    setModal(current => current === "board" ? "" : current);
+    setBoardProject(null);
     setApplicationTab("received");
     setForm(null);
     setRepos([]);
@@ -386,6 +390,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
           {r.status === "Accepted" && <p className="acceptance-note">Accepted in YakKeeper only. GitHub access is managed separately.{user?.demo ? " Sandbox account — no real invitation sent." : ""}</p>}
           {!user?.demo && <div className="application-links">
             {canConnect && <a className="text-button" href={"https://github.com/"+contactLogin} target="_blank" rel="noreferrer">{received ? "Applicant on GitHub" : "Owner on GitHub"}<ArrowUpRight size={13}/></a>}
+            {project && r.status === "Accepted" && r.kind === "contribution" && <button className="text-button" onClick={() => {setBoardProject(project); open("board");}}>Open task board<ArrowUpRight size={13}/></button>}
             {project?.repo && <a className="text-button" href={project.repo} target="_blank" rel="noreferrer">Repository<ArrowUpRight size={13}/></a>}
             {received && r.status === "Accepted" && r.kind === "contribution" && project?.repo && <a className="text-button" href={project.repo.replace(/\/$/,"")+"/settings/access"} target="_blank" rel="noreferrer">Manage access<ArrowUpRight size={13}/></a>}
           </div>}
@@ -695,6 +700,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
                     </div>
                   </div>
                   <div className="project-actions">
+                    {user && (p.owner_id === user.id || joined.has(p.id)) && <button className="small-button task-board-open" onClick={() => {setBoardProject(p); open("board");}}>Task board<ArrowUpRight size={13}/></button>}
                     {p.owner_id === user?.id ? (
                       <button className="small-button" onClick={() => edit(p)}>
                         Edit project
@@ -902,12 +908,12 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
       {modal && (
         <div className="modal-backdrop">
           <section
-            className={"modal" + (modal === "login" ? " login-dialog" : modal === "editor" ? " editor-dialog" : "")}
+            className={"modal" + (modal === "board" ? " task-board-dialog" : modal === "login" ? " login-dialog" : modal === "editor" ? " editor-dialog" : "")}
             ref={dialog}
             role="dialog"
             aria-modal="true"
             aria-label={
-              modal === "repos"
+              modal === "board" ? "Project task board" : modal === "repos"
                 ? "Choose a repository"
                 : modal === "editor"
                   ? "Project editor"
@@ -943,7 +949,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
             </div>}
             <div className="modal-heading">
               <h2>
-                {modal === "repos"
+                {modal === "board" ? (boardProject?.title || "Project") + " · Task board" : modal === "repos"
                   ? "Choose a repository"
                   : modal === "editor"
                     ? editing
@@ -961,6 +967,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
                 <X size={19} />
               </button>
             </div>
+            {modal === "board" && boardProject && user && <TaskBoard key={boardProject.id + user.id} project={boardProject} user={user}/>}
             {modal === "login" && (
               <div className="login-panel">
                 <p className="login-intro">Bring a project. Find a teammate. Start building.</p>
