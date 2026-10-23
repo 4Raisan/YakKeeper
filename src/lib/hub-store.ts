@@ -48,7 +48,8 @@ export function store(local: boolean): Store {
     return {
       async find(table, filters = {}, limit = 100) {
         let q = db.from(table).select("*");
-        for (const [k, v] of Object.entries(filters)) q = q.eq(k, v);
+        for (const [k, v] of Object.entries(filters))
+          q = Array.isArray(v) ? q.in(k, v) : q.eq(k, v);
         return (
           check(
             await q.order("created_at", { ascending: false }).limit(limit),
@@ -80,7 +81,9 @@ export function store(local: boolean): Store {
           .all(table) as { data: string }[]
       )
         .map((r) => JSON.parse(r.data) as Row)
-        .filter((r) => Object.entries(filters).every(([k, v]) => r[k] === v))
+        .filter((r) => Object.entries(filters).every(([k, v]) =>
+          Array.isArray(v) ? v.includes(r[k]) : r[k] === v,
+        ))
         .sort((a, b) =>
           String(b.created_at || "").localeCompare(String(a.created_at || "")),
         )

@@ -153,17 +153,24 @@ export async function GET(request: Request) {
     const mine = user
       ? await db.find("yak_projects", { owner_id: user.id })
       : [];
-    const projects = [
-      ...new Map(
-        [...all.slice(0, page * 24), ...mine].map((p) => [p.id, p]),
-      ).values(),
-    ] as Project[];
     const inbox = user
       ? await db.find("yak_interactions", { owner_id: user.id })
       : [];
     const sent = user
       ? await db.find("yak_interactions", { applicant_id: user.id })
       : [];
+    // Join membership comes only from this authenticated applicant's accepted requests.
+    const joinedIds = [...new Set(sent
+      .filter((r) => r.kind === "contribution" && r.status === "Accepted")
+      .map((r) => r.project_id))];
+    const joined = joinedIds.length
+      ? await db.find("yak_projects", { id: joinedIds, visibility: "public" })
+      : [];
+    const projects = [
+      ...new Map(
+        [...all.slice(0, page * 24), ...mine, ...joined].map((p) => [p.id, p]),
+      ).values(),
+    ] as Project[];
     const blocks = user
       ? await db.find("yak_blocks", { owner_id: user.id })
       : [];

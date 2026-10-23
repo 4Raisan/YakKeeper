@@ -37,6 +37,7 @@ import {
   type Repo,
   type HubRequest,
 } from "@/lib/hub-types";
+import { joinedProjectIds, isMyProject } from "@/lib/hub-membership";
 const emptyHub: HubState = {
   configured: false,
   mode: "unconfigured",
@@ -335,10 +336,11 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
     setExpanded(project.id);
   }
   const user = hub.user;
+  const joined = joinedProjectIds(hub.sent, user?.id);
   const searchTerms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const list = hub.projects
     .filter((p) =>
-      view === "my" ? p.owner_id === user?.id : p.visibility === "public",
+      view === "my" ? isMyProject(p, user?.id, joined) : p.visibility === "public",
     )
     .filter((p) => {
       const text = `${p.title} ${p.tags} ${p.needs} ${p.owner_login} ${p.summary}`.toLowerCase();
@@ -688,7 +690,8 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
                           ? "Open to teammates"
                           : "Requests closed"}
                       </span>
-                      {view === "my" && <span>{p.visibility}</span>}
+                      {view === "my" && <span>{p.owner_id === user?.id ? "Owner" : "Joined"}</span>}
+                      {view === "my" && p.owner_id === user?.id && <span>{p.visibility}</span>}
                     </div>
                   </div>
                   <div className="project-actions">
@@ -696,6 +699,13 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
                       <button className="small-button" onClick={() => edit(p)}>
                         Edit project
                         <ArrowUpRight size={13} />
+                      </button>
+                    ) : joined.has(p.id) ? (
+                      <button className="small-button" onClick={() => {
+                        navigate("applications");
+                        setApplicationTab("sent");
+                      }}>
+                        View application<ArrowUpRight size={13} />
                       </button>
                     ) : (
                       <>
@@ -849,13 +859,15 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
                   {query
                     ? "No matching projects."
                     : view === "my"
-                      ? "Your next project starts here."
+                      ? "No owned or joined projects yet."
                       : "Be the first to build together."}
                 </h2>
                 <p>
                   {query
                     ? "Try another skill or project name."
-                    : "Choose a GitHub repository and tell people what help you need."}
+                    : view === "my"
+                      ? "Publish a project or join one from Explore. Accepted join requests appear here."
+                      : "Choose a GitHub repository and tell people what help you need."}
                 </p>
                 <button className="button primary" onClick={addProject}>
                   Add project
