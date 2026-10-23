@@ -61,6 +61,16 @@ nav button{font-size:16px}nav button>span{font-size:12px}
 .project-list .project-actions{flex-direction:row;align-self:stretch;padding:0;margin-top:auto;flex-wrap:wrap}
 .project-list .project-actions .small-button{flex:1}
 .project-list .project-details{margin:0 20px 24px;max-width:none;overflow-wrap:anywhere}
+.project-list .inline-panel{margin:0 16px 16px;padding:16px;min-width:0;max-width:100%;overflow-wrap:anywhere}
+.project-list .inline-title{gap:12px;align-items:flex-start}
+.project-list .inline-title h2{min-width:0;line-height:1.4}
+.project-list .inline-title .icon-button{flex-shrink:0}
+.project-list .inline-panel form,.project-list .inline-panel label{min-width:0}
+.project-list .inline-panel label,.project-list .inline-panel .application-as,.project-list .send-row small{color:var(--muted)}
+.project-list .inline-panel textarea{display:block;width:100%;max-width:100%;min-width:0;min-height:120px;resize:vertical}
+.project-list .send-row{flex-wrap:wrap;gap:12px}
+.project-list .send-row small{flex:1 1 160px;min-width:0;max-width:none}
+.project-list .send-row .button{margin-left:auto;flex-shrink:0}
 .project-list>.empty{grid-column:1/-1}
 .project-list .project-links{flex-wrap:wrap}
 @media(max-width:760px){
