@@ -38,6 +38,7 @@ export function localDatabase() {
     db.exec(
       `PRAGMA journal_mode=WAL;CREATE TABLE IF NOT EXISTS records(collection TEXT NOT NULL,id TEXT NOT NULL,data TEXT NOT NULL,PRIMARY KEY(collection,id));CREATE UNIQUE INDEX IF NOT EXISTS unique_repo ON records(json_extract(data,'$.repo_id')) WHERE collection='yak_projects';CREATE UNIQUE INDEX IF NOT EXISTS unique_application ON records(json_extract(data,'$.project_id'),json_extract(data,'$.applicant_id')) WHERE collection='yak_interactions' AND json_extract(data,'$.kind')='contribution';CREATE UNIQUE INDEX IF NOT EXISTS unique_block ON records(json_extract(data,'$.owner_id'),json_extract(data,'$.blocked_id')) WHERE collection='yak_blocks';`,
     );
+    db.exec("CREATE UNIQUE INDEX IF NOT EXISTS unique_task_worker ON records(json_extract(data,'$.task_id'),json_extract(data,'$.user_id')) WHERE collection='yak_task_workers';");
     connections.set(filename, db);
   }
   return db;
@@ -127,6 +128,8 @@ export function store(local: boolean): Store {
           const record = db.prepare("SELECT data FROM records WHERE collection=? AND id=?").get(table,id) as {data:string}|undefined;
           const project = record ? JSON.parse(record.data) : null;
           if (project?.moderated && project.repo_id) db.prepare("INSERT OR IGNORE INTO records VALUES ('yak_repo_restrictions',?,?)").run(String(project.repo_id),JSON.stringify({id:String(project.repo_id),repo_id:project.repo_id,created_at:new Date().toISOString()}));
+          db.prepare("DELETE FROM records WHERE collection='yak_task_workers' AND json_extract(data,'$.task_id') IN (SELECT json_extract(data,'$.id') FROM records WHERE collection='yak_tasks' AND json_extract(data,'$.project_id')=?)").run(id);
+          db.prepare("DELETE FROM records WHERE collection='yak_tasks' AND json_extract(data,'$.project_id')=?").run(id);
           db.prepare("DELETE FROM records WHERE collection IN ('yak_interactions','yak_reports') AND json_extract(data,'$.project_id')=?").run(id);
         }
         db.prepare("DELETE FROM records WHERE collection=? AND id=?").run(table,id);

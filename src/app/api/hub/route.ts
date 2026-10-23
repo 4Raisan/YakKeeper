@@ -22,6 +22,7 @@ import type { Repo } from "../../../lib/hub-types.ts";
 import { withBanners, saveBanner, removeBanner } from "../../../lib/hub-banners.ts";
 import {notifyAdmin} from "../../../lib/hub-whatsapp.ts";
 import {seedDemoWorkspace} from "../../../lib/hub-demo-seed.ts";
+import { readBoard, changeTask } from "../../../lib/hub-tasks.ts";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 async function boundedJson(request: Request) {
@@ -114,6 +115,9 @@ export async function GET(request: Request) {
     const db = store(local),
       user = await identity(request, local),
       url = new URL(request.url);
+    if (url.searchParams.get("resource") === "board") {
+      return reply(await readBoard(db, url.searchParams.get("project_id") || "", user));
+    }
     if (url.searchParams.get("resource") === "repos") {
       if (!user) throw new HttpError(401, "Sign in with GitHub first.");
       const page = z.coerce
@@ -226,6 +230,10 @@ export async function POST(request: Request) {
     const db = store(local),
       user = await identity(request, local);
     if (!user) throw new HttpError(401, "Sign in with GitHub to continue.");
+    if (["createTask", "taskStatus", "workOnTask"].includes(body.action)) {
+      await changeTask(db, body, user);
+      return reply({ok:true});
+    }
     if (body.action === "profile") {
       await db.patch(
         "yak_profiles",
