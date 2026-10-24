@@ -13,9 +13,9 @@ Built for people learning by building, including beginners and first-time contri
 1. **Explore:** browse public projects, search by project, skills or owner, and filter by project type. Expand a card for its description and follow its repository link.
 2. **Publish:** sign in with GitHub, select a public repository you own, and choose its type, status and visibility. The name and description come from GitHub. Add an optional banner and describe the help you need, if you want.
 3. **Apply:** send an idea or a contribution request explaining what you would bring. A message is required; a blank request cannot be submitted.
-4. **Review:** owners manage received requests in **Applications**; applicants track their sent requests there. Accepting records a decision in YakKeeper. Arrange the first task through GitHub; acceptance does **not** invite a collaborator or grant repository access.
+4. **Review:** owners manage received requests in **Applications**; applicants track their sent requests there. Accepting records a decision in YakKeeper. Accepted contributors become project members and can use the shared task board. Acceptance does **not** grant GitHub repository access.
 
-**My projects** contains your own listings and editing controls. Owners can close requests, change visibility, replace banners or delete a listing. Deletion removes its YakKeeper applications, ideas, reports and banner; the GitHub repository stays untouched. **Reports** is an administrator-only queue for flagged listings.
+**My projects** contains your own listings, joined projects and pending invitations. Only owners see listing editing controls. Owners can close requests, change visibility, replace banners or delete a listing. Deletion removes its YakKeeper applications, ideas, reports and banner; the GitHub repository stays untouched. **Reports** is an administrator-only queue for flagged listings.
 
 Public listings appear in Explore. Private listings are visible only to their owner; archived listings leave public discovery. Beginner-friendly labels help contributors find suitable work. Light and dark themes and a responsive project grid are included.
 
@@ -27,13 +27,23 @@ Repository details refresh when a listing is saved. YakKeeper does not continuou
 
 The hosted application has been checked with GitHub sign-in and public repository discovery. Automated tests cover multiple local personas; the full two-real-account OAuth workflow needs separate integration verification. WhatsApp remains disabled by default and live delivery is not verified.
 
+## Members, invitations and sharing
+
+Each owner has a **Members** panel: look up a GitHub username, confirm the account, and send an invitation. Recipients accept or decline in **My projects**. Owners can cancel pending invitations or remove a member from that project. Invitations stay tied to the verified GitHub account ID if its username changes. Existing accepted contributors are preserved as members independently of application-history limits.
+
+Use **How people join** in the editor to choose **Open applications** or **Invite only**. A public invite-only project stays in Explore; its Join button is disabled, while ideas can still be submitted when requests are open. Private listings remain owner-only. These controls do not manage GitHub repository permissions, send email, or request repository write scopes.
+
+**Copy share link** gives a direct `/projects/<id>` page. Owners can highlight a starter task, effort, and an optional GitHub issue from the connected repository. Sharing a listing does not expose the private team board or member list.
+
 ## Shared project task boards
 
 Open **Task board** on a project you own or have joined through an accepted contribution request. Plan tasks in **Future**, **Ongoing**, and **Finished**. Owners and accepted members can create tasks and change their status, including reopening finished work. Use **I'm working on this** to add yourself; several members can work on the same task, and each person controls their own participation.
 
-Boards are team-only. Pending applicants, accepted idea submissions, blocked accounts, and declined members cannot access them. Members cannot access private or archived listings; owners can read archived boards. A task assignment does not grant GitHub access. Boards refresh on window focus, every 20 seconds while visible, and after changes; use **Refresh** for an immediate update. Each board supports up to 200 tasks, with task creation limited to five per member per minute.
+Boards are team-only. Pending applicants, accepted idea submissions, blocked accounts, and declined members cannot access them. Members cannot access private or archived listings; owners can read archived boards. A task assignment does not grant GitHub access. Boards refresh on window focus, every 20 seconds while visible, and after changes; use **Refresh** for an immediate update. Each board supports up to 200 active tasks, with task creation limited to five per member per minute.
 
-For a new deployment, apply the ordered migrations, including `supabase/migrations/20261023142648_project_task_boards.sql`, before deploying the board code. This migration is already applied to the existing YakKeeper database. See [task board verification](docs/task-boards.md) for behavior and checks.
+Owners and task creators can edit task titles/details. Owners can archive tasks and restore them from **Archived**; archived work does not count toward the active limit, and its participants are retained.
+
+For a new deployment, apply all ordered files in `supabase/migrations` before deploying the application. These migrations are already applied to the existing YakKeeper database. See [task board verification](docs/task-boards.md) for behavior and checks.
 
 ## Run locally
 

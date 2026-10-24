@@ -1,6 +1,6 @@
 # Project task boards
 
-Each project owner and accepted contribution member can open **Task board** from its card. Live accepted applications also provide an **Open task board** shortcut. The board starts empty; the existing roadmap is retained separately.
+Each project owner and active member can open **Task board** from its card. Live accepted applications also provide an **Open task board** shortcut. The board starts empty; the existing roadmap is retained separately.
 
 ## Controls
 
@@ -9,13 +9,17 @@ Each project owner and accepted contribution member can open **Task board** from
 - **I'm working on this** marks your own participation. Multiple people can join. **I'm on this · leave** removes only your assignment. Finished tasks retain their participants; reopen them before adding new participants.
 - **Refresh** reloads shared state. Updates also load after writes, on focus, every 20 seconds while visible, and through a same-browser tab notification. This is polling, not instantaneous cross-device realtime.
 
+## Editing and archiving
+
+Owners and task creators can edit titles and details. Only owners can archive or restore tasks. Use **Archived** to browse history (50 tasks per page). Archives retain participants and free active-board capacity. Restoring respects the same 200-active-task limit. The database serializes active-capacity checks per project, including concurrent restores. Archived tasks must be restored before other changes.
+
 ## Access and persistence
 
-The API rechecks ownership or an accepted contribution on every board read and write. Accepted ideas do not grant membership. Blocked or declined users lose board access. Non-owners cannot access private, archived, or moderated listings. Archived boards are read-only for owners. Listing edit/delete permissions are unchanged.
+The API rechecks ownership or active project membership on every board read and write. Accepted ideas do not grant membership. Blocked or removed members lose board access. Declining an accepted contribution revokes its application-derived membership. Non-owners cannot access private, archived, or moderated listings. Archived boards are read-only for owners. Listing edit/delete permissions are unchanged.
 
 Tasks and participant rows live in `yak_tasks` and `yak_task_workers`. Both tables enable RLS, deny direct `anon`/`authenticated` access, and allow the existing server role. Assignments use a unique `(task_id,user_id)` constraint so concurrent participation does not overwrite another member's assignment. Project deletion cascades to tasks and assignments in Postgres and the local SQLite sandbox. No task information is included in public discovery responses.
 
-Boards support 200 tasks, and creation is limited to five tasks per member per minute. Status changes are shared team actions; the last saved status wins. Task assignments do not modify GitHub permissions.
+Boards support 200 active tasks, and creation is limited to five tasks per member per minute. Status changes are shared team actions; the last saved status wins. Task assignments do not modify GitHub permissions.
 
 ## Verification
 
