@@ -24,7 +24,7 @@ test("My projects includes only owned projects and accepted join requests", () =
   assert.equal(joinedProjectIds([request]).size, 0);
 });
 
-test("accepted projects load beyond Explore pagination without granting editing or private access", async () => {
+test("accepted projects load beyond Explore pagination without granting editing or anonymous private access", async () => {
   process.env.YAKKEEPER_LOCAL_DEMO="true";
   process.env.YAKKEEPER_LOCAL_DB=path.join(mkdtempSync(path.join(tmpdir(),"yak-membership-")),"test.sqlite");
   const call=async(body?:unknown,cookie="") => {
@@ -55,6 +55,7 @@ test("accepted projects load beyond Explore pagination without granting editing 
   for(const visibility of ["private","archived"]) {
     await db.patch("yak_projects",String(project.id),{visibility});
     assert.equal((await read()).projects.some((p:Project)=>p.id===project.id),false);
+    assert.equal((await read("")).projects.some((p:Project)=>p.id===project.id),false);
   }
   await db.patch("yak_projects",String(project.id),{visibility:"public"});
   await db.patch("yak_interactions",String(request.id),{status:"Declined"});

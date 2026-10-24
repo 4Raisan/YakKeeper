@@ -9,5 +9,5 @@ export function joinedProjectIds(sent: HubRequest[], userId?: string) {
 
 export function isMyProject(project: Project, userId: string | undefined, joined: Set<string>) {
   return Boolean(userId) && (project.owner_id === userId ||
-    (project.visibility === "public" && joined.has(project.id)));
+    (project.visibility === "public" && (project.is_member ?? joined.has(project.id))));
 }

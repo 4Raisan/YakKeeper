@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type {ProjectInvitation} from "./project-members.ts";
 export type Profile = {
   id: string;
   name: string;
@@ -29,6 +30,11 @@ export type Project = {
   repo: string;
   demo: string;
   visibility: string;
+  join_policy?: "open" | "invite_only";
+  starter_title?: string;
+  starter_url?: string;
+  starter_time?: string;
+  is_member?: boolean;
   contributions_open: boolean;
   beginner_friendly: boolean;
   time_commitment: string;
@@ -80,6 +86,7 @@ export type HubState = {
   sent: HubRequest[];
   reports: Report[];
   blocks: string[];
+  invitations: ProjectInvitation[];
   hasMore: boolean;
 };
 export const blankProject = {
@@ -94,6 +101,10 @@ export const blankProject = {
   roadmap: "",
   demo: "",
   visibility: "public",
+  join_policy: "open" as "open" | "invite_only",
+  starter_title: "",
+  starter_url: "",
+  starter_time: "",
   contributions_open: true,
   beginner_friendly: true,
   banner_url: "",
@@ -124,6 +135,10 @@ export const projectSchema = z.object({
   roadmap: z.string().trim().max(3000),
   demo: url,
   visibility: z.enum(["public", "private", "archived"]),
+  join_policy: z.enum(["open","invite_only"]).default("open"),
+  starter_title: z.string().trim().max(160).default(""),
+  starter_url: url.default(""),
+  starter_time: z.string().trim().max(80).default(""),
   contributions_open: z.boolean(),
   beginner_friendly: z.boolean(),
   banner_data: z.string().max(180000).nullable().optional(),

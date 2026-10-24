@@ -22,6 +22,7 @@ import type { Repo } from "../../../lib/hub-types.ts";
 import { withBanners, saveBanner, removeBanner } from "../../../lib/hub-banners.ts";
 import {notifyAdmin} from "../../../lib/hub-whatsapp.ts";
 import {seedDemoWorkspace} from "../../../lib/hub-demo-seed.ts";
+import { ownedProject, lookupMember, memberAction } from "../../../lib/project-members.ts";
 import { readBoard, changeTask } from "../../../lib/hub-tasks.ts";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -108,6 +109,7 @@ export async function GET(request: Request) {
         user: null,
         inbox: [],
         sent: [],
+        invitations: [],
         reports: [],
         blocks: [],
         hasMore: false,
@@ -116,7 +118,13 @@ export async function GET(request: Request) {
       user = await identity(request, local),
       url = new URL(request.url);
     if (url.searchParams.get("resource") === "board") {
-      return reply(await readBoard(db, url.searchParams.get("project_id") || "", user));
+      return reply(await readBoard(db, url.searchParams.get("project_id") || "", user,
+        url.searchParams.get("archived") === "true", z.coerce.number().int().min(1).max(1000).parse(url.searchParams.get("archive_page") || 1)));
+    }
+    if (["members","githubUser"].includes(url.searchParams.get("resource") || "")) {
+      const project = await ownedProject(db,url.searchParams.get("project_id"),user);
+      if (url.searchParams.get("resource") === "githubUser") return reply(await lookupMember(url.searchParams.get("username"),local));
+      return reply({members:await db.find("yak_members",{project_id:project.id},1000)});
     }
     if (url.searchParams.get("resource") === "repos") {
       if (!user) throw new HttpError(401, "Sign in with GitHub first.");
@@ -163,18 +171,26 @@ export async function GET(request: Request) {
     const sent = user
       ? await db.find("yak_interactions", { applicant_id: user.id })
       : [];
-    // Join membership comes only from this authenticated applicant's accepted requests.
-    const joinedIds = [...new Set(sent
-      .filter((r) => r.kind === "contribution" && r.status === "Accepted")
-      .map((r) => r.project_id))];
-    const joined = joinedIds.length
-      ? await db.find("yak_projects", { id: joinedIds, visibility: "public" })
-      : [];
-    const projects = [
-      ...new Map(
-        [...all.slice(0, page * 24), ...mine, ...joined].map((p) => [p.id, p]),
-      ).values(),
-    ] as Project[];
+    const memberships = user ? await db.find("yak_members",{github_id:user.github_id,status:"active"},1000) : [];
+    const blockedBy = user ? await db.find("yak_blocks",{blocked_id:user.id},1000) : [];
+    const joinedIds = memberships.map(m => m.project_id);
+    const joined = joinedIds.length ? (await db.find("yak_projects",{id:joinedIds},1000))
+      .filter(p => p.visibility === "public" && !p.moderated && !blockedBy.some(b => b.owner_id === p.owner_id)) : [];
+    const activeIds = new Set(joined.map(p => p.id));
+    let projects = [...new Map([...all.slice(0,page*24),...mine,...joined].map(p=>[p.id,p])).values()]
+      .map(p=>({...p,is_member:activeIds.has(p.id)})) as Project[];
+    if (url.searchParams.get("resource") === "project") {
+      const id=z.string().uuid().parse(url.searchParams.get("project_id"));
+      const target=(await db.find("yak_projects",{id},1))[0];
+      if (!target || (target.visibility !== "public" && target.owner_id !== user?.id && !activeIds.has(id))) throw new HttpError(404,"Project unavailable.");
+      projects=[{...target,is_member:activeIds.has(id)} as Project];
+    }
+    const pending=user ? await db.find("yak_members",{github_id:user.github_id,status:"invited"},100) : [];
+    const invitationProjects=pending.length ? await db.find("yak_projects",{id:pending.map(m=>m.project_id)},100) : [];
+    const invitations=pending.flatMap(m=>{
+      const p=invitationProjects.find(p=>p.id===m.project_id && p.visibility==="public" && !p.moderated && !blockedBy.some(b=>b.owner_id===p.owner_id));
+      return p ? [{...m,project_title:p.title,owner_login:p.owner_login}] : [];
+    });
     const blocks = user
       ? await db.find("yak_blocks", { owner_id: user.id })
       : [];
@@ -186,6 +202,7 @@ export async function GET(request: Request) {
       user: user ? publicProfile(user) : null,
       inbox: inbox.map(application),
       sent: sent.map(application),
+      invitations,
       reports,
       blocks: blocks.map((b) => b.blocked_id),
       hasMore: all.length > page * 24,
@@ -230,8 +247,12 @@ export async function POST(request: Request) {
     const db = store(local),
       user = await identity(request, local);
     if (!user) throw new HttpError(401, "Sign in with GitHub to continue.");
-    if (["createTask", "taskStatus", "workOnTask"].includes(body.action)) {
+    if (["createTask", "taskStatus", "workOnTask", "editTask", "archiveTask"].includes(body.action)) {
       await changeTask(db, body, user);
+      return reply({ok:true});
+    }
+    if (["inviteMember","removeMember","respondInvite"].includes(body.action)) {
+      await memberAction(db,body,user,local);
       return reply({ok:true});
     }
     if (body.action === "profile") {
@@ -291,6 +312,9 @@ export async function POST(request: Request) {
       } else repo = await ownedRepo(input.repo_id, user.github_id);
       if (repo.archived)
         throw new HttpError(400, "Archived repositories cannot be published.");
+      if (input.starter_url && (!repo.html_url || !input.starter_url.startsWith(repo.html_url + "/issues/") || !/\/issues\/\d+$/.test(input.starter_url)))
+        throw new HttpError(400,"Use an issue link from this project's GitHub repository.");
+      if (input.starter_url && !input.starter_title) throw new HttpError(400,"Give the starter task a title.");
       let newBanner: string | undefined;
       if (typeof banner_data === "string") {
         if (!(await db.limit("banner:" + user.id))) throw new HttpError(429,"Hourly banner upload limit reached.");
@@ -325,6 +349,8 @@ export async function POST(request: Request) {
         })
       )[0];
       if (!project) throw new HttpError(404, "Project unavailable.");
+      if (input.kind === "contribution" && project.join_policy === "invite_only") throw new HttpError(403,"This project is invite only.");
+      if (input.kind === "contribution" && (await db.find("yak_members",{project_id:project.id,github_id:user.github_id,status:"active"},1)).length) throw new HttpError(409,"You are already a member.");
       if (project.owner_id === user.id)
         throw new HttpError(400, "You cannot apply to your own project.");
       if (!project.contributions_open || project.status !== "In progress")

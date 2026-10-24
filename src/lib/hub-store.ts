@@ -3,12 +3,13 @@ import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { randomUUID, randomBytes } from "node:crypto";
 import { serverDb, check, digest, HttpError } from "./supabase-server.ts";
+import {syncApplicationMember} from "./project-members.ts";
 import {demoAccounts} from "./hub-demo.ts";
 export type Row = Record<string, unknown>;
 export type Store = {
-  find: (table: string, filters?: Row, limit?: number) => Promise<Row[]>;
+  find: (table: string, filters?: Row, limit?: number, offset?: number) => Promise<Row[]>;
   save: (table: string, row: Row) => Promise<Row>;
-  patch: (table: string, id: string, row: Row) => Promise<void>;
+  patch: (table: string, id: string, row: Row, conditions?: Row) => Promise<void>;
   remove: (table: string, id: string) => Promise<void>;
   limit: (id: string) => Promise<boolean>;
 };
@@ -39,6 +40,19 @@ export function localDatabase() {
       `PRAGMA journal_mode=WAL;CREATE TABLE IF NOT EXISTS records(collection TEXT NOT NULL,id TEXT NOT NULL,data TEXT NOT NULL,PRIMARY KEY(collection,id));CREATE UNIQUE INDEX IF NOT EXISTS unique_repo ON records(json_extract(data,'$.repo_id')) WHERE collection='yak_projects';CREATE UNIQUE INDEX IF NOT EXISTS unique_application ON records(json_extract(data,'$.project_id'),json_extract(data,'$.applicant_id')) WHERE collection='yak_interactions' AND json_extract(data,'$.kind')='contribution';CREATE UNIQUE INDEX IF NOT EXISTS unique_block ON records(json_extract(data,'$.owner_id'),json_extract(data,'$.blocked_id')) WHERE collection='yak_blocks';`,
     );
     db.exec("CREATE UNIQUE INDEX IF NOT EXISTS unique_task_worker ON records(json_extract(data,'$.task_id'),json_extract(data,'$.user_id')) WHERE collection='yak_task_workers';");
+    db.exec("CREATE UNIQUE INDEX IF NOT EXISTS unique_member ON records(json_extract(data,'$.project_id'),json_extract(data,'$.github_id')) WHERE collection='yak_members';");
+    db.exec("UPDATE records SET data=json_set(data,'$.archived',json('false')) WHERE collection='yak_tasks' AND json_type(data,'$.archived') IS NULL;");
+    // One-time backfill for pre-existing sandbox applications; never revive removed members.
+    const accepted = db.prepare("SELECT data FROM records WHERE collection='yak_interactions' AND json_extract(data,'$.status')='Accepted' AND json_extract(data,'$.kind')='contribution'").all() as {data:string}[];
+    for (const entry of accepted) {
+      const app = JSON.parse(entry.data);
+      const profileRow = db.prepare("SELECT data FROM records WHERE collection='yak_profiles' AND id=?").get(app.applicant_id) as {data:string}|undefined;
+      if (!profileRow) continue;
+      const profile = JSON.parse(profileRow.data);
+      if (!profile.github_id) continue;
+      const member = {id:randomUUID(),project_id:app.project_id,github_id:profile.github_id,login:profile.github_login,user_id:profile.id,status:'active',source_application_id:app.id,created_at:new Date().toISOString()};
+      db.prepare("INSERT OR IGNORE INTO records VALUES ('yak_members',?,?)").run(member.id,JSON.stringify(member));
+    }
     connections.set(filename, db);
   }
   return db;
@@ -47,21 +61,24 @@ export function store(local: boolean): Store {
   if (!local) {
     const db = serverDb();
     return {
-      async find(table, filters = {}, limit = 100) {
+      async find(table, filters = {}, limit = 100, offset = 0) {
         let q = db.from(table).select("*");
         for (const [k, v] of Object.entries(filters))
           q = Array.isArray(v) ? q.in(k, v) : q.eq(k, v);
         return (
           check(
-            await q.order("created_at", { ascending: false }).limit(limit),
+            await q.order("created_at", { ascending: false }).order("id", {ascending:false}).range(offset, offset + limit - 1),
           ) || []
         );
       },
       async save(table, row) {
         return check(await db.from(table).insert(row).select().single()) as Row;
       },
-      async patch(table, id, row) {
-        check(await db.from(table).update(row).eq("id", id));
+      async patch(table, id, row, conditions = {}) {
+        let query = db.from(table).update(row).eq("id", id);
+        for (const [key,value] of Object.entries(conditions)) query = query.eq(key,value);
+        const changed = check(await query.select("id"));
+        if (!changed?.length) throw new HttpError(409,"The record changed. Refresh and try again.");
       },
       async remove(table, id) {
         check(await db.from(table).delete().eq("id", id));
@@ -75,7 +92,7 @@ export function store(local: boolean): Store {
   }
   const db = localDatabase();
   return {
-    async find(table, filters = {}, limit = 100) {
+    async find(table, filters = {}, limit = 100, offset = 0) {
       return (
         db
           .prepare("SELECT data FROM records WHERE collection=?")
@@ -86,12 +103,14 @@ export function store(local: boolean): Store {
           Array.isArray(v) ? v.includes(r[k]) : r[k] === v,
         ))
         .sort((a, b) =>
-          String(b.created_at || "").localeCompare(String(a.created_at || "")),
+          String(b.created_at || "").localeCompare(String(a.created_at || "")) || String(b.id).localeCompare(String(a.id)),
         )
-        .slice(0, limit);
+        .slice(offset, offset + limit);
     },
     async save(table, row) {
+      if (table === "yak_tasks" && !row.archived && (db.prepare("SELECT count(*) AS n FROM records WHERE collection='yak_tasks' AND json_extract(data,'$.project_id')=? AND coalesce(json_extract(data,'$.archived'),0)=0").get(String(row.project_id)) as {n:number}).n >= 200) throw new HttpError(409,"Archive a task before adding more.");
       const saved = {
+        ...(table === "yak_tasks" ? {archived:false} : {}),
         id: randomUUID(),
         created_at: new Date().toISOString(),
         ...row,
@@ -108,18 +127,23 @@ export function store(local: boolean): Store {
           "This repository or application is already listed.",
         );
       }
+      if (table === "yak_interactions") await syncApplicationMember(store(true),saved);
       return saved;
     },
-    async patch(table, id, row) {
+    async patch(table, id, row, conditions = {}) {
       const existing = db
         .prepare("SELECT data FROM records WHERE collection=? AND id=?")
         .get(table, id) as { data: string } | undefined;
       if (!existing) throw new HttpError(404, "Record not found.");
+      const previous = JSON.parse(existing.data);
+      if (!Object.entries(conditions).every(([key,value]) => previous[key] === value)) throw new HttpError(409,"The record changed. Refresh and try again.");
+      if (table === "yak_tasks" && previous.archived && row.archived === false && (db.prepare("SELECT count(*) AS n FROM records WHERE collection='yak_tasks' AND json_extract(data,'$.project_id')=? AND coalesce(json_extract(data,'$.archived'),0)=0").get(String(previous.project_id)) as {n:number}).n >= 200) throw new HttpError(409,"Archive a task before restoring this one.");
       db.prepare("UPDATE records SET data=? WHERE collection=? AND id=?").run(
-        JSON.stringify({ ...JSON.parse(existing.data), ...row }),
+        JSON.stringify({ ...previous, ...row }),
         table,
         id,
       );
+      if (table === "yak_interactions") await syncApplicationMember(store(true),{...previous,...row},previous);
     },
     async remove(table, id) {
       db.exec("BEGIN IMMEDIATE");
@@ -130,7 +154,7 @@ export function store(local: boolean): Store {
           if (project?.moderated && project.repo_id) db.prepare("INSERT OR IGNORE INTO records VALUES ('yak_repo_restrictions',?,?)").run(String(project.repo_id),JSON.stringify({id:String(project.repo_id),repo_id:project.repo_id,created_at:new Date().toISOString()}));
           db.prepare("DELETE FROM records WHERE collection='yak_task_workers' AND json_extract(data,'$.task_id') IN (SELECT json_extract(data,'$.id') FROM records WHERE collection='yak_tasks' AND json_extract(data,'$.project_id')=?)").run(id);
           db.prepare("DELETE FROM records WHERE collection='yak_tasks' AND json_extract(data,'$.project_id')=?").run(id);
-          db.prepare("DELETE FROM records WHERE collection IN ('yak_interactions','yak_reports') AND json_extract(data,'$.project_id')=?").run(id);
+          db.prepare("DELETE FROM records WHERE collection IN ('yak_interactions','yak_reports','yak_members') AND json_extract(data,'$.project_id')=?").run(id);
         }
         db.prepare("DELETE FROM records WHERE collection=? AND id=?").run(table,id);
         db.exec("COMMIT");

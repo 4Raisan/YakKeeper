@@ -34,6 +34,7 @@ export function check<T>(result: { data: T; error: unknown }): T {
         409,
         "This repository or application is already listed.",
       );
+    if (code === "23514") throw new HttpError(409,"Project limit reached. Archive a task before adding or restoring more.");
     throw new HttpError(
       503,
       "Database unavailable or schema upgrade required.",

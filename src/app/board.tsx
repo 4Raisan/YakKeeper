@@ -46,6 +46,7 @@ const emptyHub: HubState = {
   user: null,
   inbox: [],
   sent: [],
+  invitations: [],
   reports: [],
   blocks: [],
   hasMore: false,

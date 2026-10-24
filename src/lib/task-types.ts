@@ -10,6 +10,7 @@ export type Task = {
   id: string;
   project_id: string;
   author_id: string;
+  archived: boolean;
   title: string;
   description: string;
   status: typeof taskStatuses[number];
@@ -17,4 +18,4 @@ export type Task = {
   updated_at: string;
 };
 export type TaskWorker = { id: string; task_id: string; user_id: string; login: string };
-export type TaskBoardState = { tasks: Task[]; workers: TaskWorker[] };
+export type TaskBoardState = { tasks: Task[]; workers: TaskWorker[]; hasMore?: boolean };

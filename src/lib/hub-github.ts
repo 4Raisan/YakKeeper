@@ -3,7 +3,7 @@ import type { Repo } from "./hub-types.ts";
 const cache = new Map<string, { expires: number; value: unknown }>();
 export async function github<T>(path: string, fresh = false): Promise<T> {
   if (
-    !/^\/(user\/\d+|users\/[a-zA-Z0-9-]+\/repos\?[^#]+|repositories\/\d+)$/.test(
+    !/^\/(user\/\d+|users\/[a-zA-Z0-9-]+|users\/[a-zA-Z0-9-]+\/repos\?[^#]+|repositories\/\d+)$/.test(
       path,
     )
   )
