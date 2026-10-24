@@ -22,6 +22,7 @@ import {
   ShieldCheck,
   Flag,
 } from "lucide-react";
+import ProjectMembers from "./project-members";
 import TaskBoard from "./task-board";
 import ProjectArt from "./project-art";
 import ThemeToggle from "./theme-toggle";
@@ -38,7 +39,7 @@ import {
   type Repo,
   type HubRequest,
 } from "@/lib/hub-types";
-import { joinedProjectIds, isMyProject } from "@/lib/hub-membership";
+import { isMyProject } from "@/lib/hub-membership";
 const emptyHub: HubState = {
   configured: false,
   mode: "unconfigured",
@@ -52,7 +53,7 @@ const emptyHub: HubState = {
   hasMore: false,
 };
 const views = ["explore", "my", "applications", "moderation"];
-export default function Board({ copyrightYear }: { copyrightYear: number }) {
+export default function Board({ copyrightYear, projectId }: { copyrightYear: number; projectId?: string }) {
   const [hub, setHub] = useState<HubState>(emptyHub),
     [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
@@ -60,7 +61,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
   const [view, setView] = useState("explore"),
     [query, setQuery] = useState(""),
     [filter, setFilter] = useState("All projects"),
-    [expanded, setExpanded] = useState(""),
+    [expanded, setExpanded] = useState(projectId || ""),
     [page, setPage] = useState(1);
   const [modal, setModal] = useState(""),
     [busy, setBusy] = useState(false),
@@ -94,7 +95,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
     const abort = new AbortController();
     readAbort.current = abort;
     try {
-      const response = await fetch("/api/hub?page=" + page, {
+      const response = await fetch(projectId ? "/api/hub?resource=project&project_id=" + encodeURIComponent(projectId) : "/api/hub?page=" + page, {
         headers: await authHeaders(),
         signal: abort.signal,
         cache: "no-store",
@@ -111,7 +112,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
     } finally {
       if (gate.current.current(ticket)) setLoading(false);
     }
-  }, [page]);
+  }, [page, projectId]);
   useEffect(() => {
     const wanted = new URLSearchParams(location.search).get("view");
     if (wanted && views.includes(wanted)) setView(wanted);
@@ -184,14 +185,23 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
     return () => document.removeEventListener("keydown", shortcut);
   }, [modal]);
   useEffect(() => {
-    setModal(current => current === "board" ? "" : current);
+    setModal(current => ["board","members"].includes(current) ? "" : current);
     setBoardProject(null);
     setApplicationTab("received");
     setForm(null);
     setRepos([]);
   }, [hub.user?.id]);
+  useEffect(() => {
+    if (!hub.user || projectId) return;
+    const target=sessionStorage.getItem("yk-return-project");
+    if (target) {
+      sessionStorage.removeItem("yk-return-project");
+      if (/^[0-9a-f-]{36}$/i.test(target)) location.assign("/projects/"+target);
+    }
+  },[hub.user,projectId]);
   useEffect(() => () => repoAbort.current?.abort(), []);
   function navigate(next: string) {
+    if (projectId) { location.assign("/?view="+next); return; }
     setView(next);
     setQuery("");
     setFilter("All projects");
@@ -305,6 +315,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
     try {
       const auth = browserAuth();
       if (!auth) throw Error("GitHub sign-in is not configured yet.");
+      if (projectId) sessionStorage.setItem("yk-return-project",projectId);
       const { error } = await auth.auth.signInWithOAuth({
         provider: "github",
         options: { redirectTo: location.origin + "/?view=my" },
@@ -341,11 +352,11 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
     setExpanded(project.id);
   }
   const user = hub.user;
-  const joined = joinedProjectIds(hub.sent, user?.id);
+  const joined = new Set(hub.projects.filter(p=>p.is_member).map(p=>p.id));
   const searchTerms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const list = hub.projects
     .filter((p) =>
-      view === "my" ? isMyProject(p, user?.id, joined) : p.visibility === "public",
+      projectId ? true : view === "my" ? isMyProject(p, user?.id, joined) : p.visibility === "public",
     )
     .filter((p) => {
       const text = `${p.title} ${p.tags} ${p.needs} ${p.owner_login} ${p.summary}`.toLowerCase();
@@ -374,35 +385,39 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
     const project = hub.projects.find(p => p.id === r.project_id);
     const contactLogin = received ? r.applicant_login : project?.owner_login;
     const canConnect = contactLogin && !contactLogin.endsWith("-demo") && !user?.demo;
+    const acceptedMember = r.status === "Accepted" && r.kind === "contribution";
+    const displayName = received ? r.name : r.project_title;
+    const identityIsName = received && contactLogin &&
+      displayName.replace(/^@/, "").toLowerCase() === contactLogin.toLowerCase();
     return <article className="request compact-request" key={r.id}>
       <div className="request-top">
-        <div className="request-title"><strong>{received ? r.name : r.project_title}</strong>
-          {canConnect && <a href={"https://github.com/"+contactLogin} target="_blank" rel="noreferrer">@{contactLogin}<ArrowUpRight size={12}/></a>}
+        <div className="request-title">
+          {canConnect && identityIsName
+            ? <a className="application-person" href={"https://github.com/" + contactLogin} target="_blank" rel="noreferrer">@{contactLogin}<ArrowUpRight size={12}/></a>
+            : <><strong>{displayName}</strong>{canConnect && <a href={"https://github.com/" + contactLogin} target="_blank" rel="noreferrer">@{contactLogin}<ArrowUpRight size={12}/></a>}</>}
         </div>
-        {received ? <select className="request-status" disabled={busy} aria-label={"Status for "+r.name} value={r.status} onChange={e=>action({action:"status",id:r.id,status:e.target.value})}>
+        {received ? <select className="request-status" disabled={busy} aria-label={"Status for " + r.name} value={r.status} onChange={e=>action({action:"status",id:r.id,status:e.target.value})}>
           {["Received","Reviewing","Accepted","Declined"].map(status=><option key={status}>{status}</option>)}
         </select> : <span className="status">{r.status}</span>}
       </div>
-      <div className="request-meta"><span>{r.kind === "idea" ? "Idea" : "Join request"}</span><span>{received ? r.project_title : project?.owner_login ? "@"+project.owner_login : "Project owner unavailable"}</span><time dateTime={r.created_at}>{new Date(r.created_at).toLocaleDateString()}</time></div>
-      <p className="request-preview">{r.message}</p>
-      <div className="request-footer">
-        <details className="application-details"><summary>Details{r.status === "Accepted" ? " & next steps" : ""}</summary>
-          <p className="pre-wrap">{r.message}</p>
-          {r.status === "Accepted" && <p className="acceptance-note">Accepted in YakKeeper only. GitHub access is managed separately.{user?.demo ? " Sandbox account — no real invitation sent." : ""}</p>}
-          {!user?.demo && <div className="application-links">
-            {canConnect && <a className="text-button" href={"https://github.com/"+contactLogin} target="_blank" rel="noreferrer">{received ? "Applicant on GitHub" : "Owner on GitHub"}<ArrowUpRight size={13}/></a>}
-            {project && r.status === "Accepted" && r.kind === "contribution" && <button className="text-button" onClick={() => {setBoardProject(project); open("board");}}>Open task board<ArrowUpRight size={13}/></button>}
-            {project?.repo && <a className="text-button" href={project.repo} target="_blank" rel="noreferrer">Repository<ArrowUpRight size={13}/></a>}
-            {received && r.status === "Accepted" && r.kind === "contribution" && project?.repo && <a className="text-button" href={project.repo.replace(/\/$/,"")+"/settings/access"} target="_blank" rel="noreferrer">Manage access<ArrowUpRight size={13}/></a>}
-          </div>}
-          {received && user?.role === "owner" && <small className="notification-detail">WhatsApp alert: {r.notification}</small>}
-        </details>
-        {received && <button disabled={busy} className="text-button block-applicant" onClick={()=>action({action:"block",user_id:r.applicant_id})}>{hub.blocks.includes(r.applicant_id) ? "Unblock" : "Block"}</button>}
+      <div className="request-meta"><span>{r.kind === "idea" ? "Idea" : "Join request"}</span>{received && <span>{r.project_title}</span>}<time dateTime={r.created_at}>{new Date(r.created_at).toLocaleDateString()}</time></div>
+      <p className="application-message pre-wrap">{r.message}</p>
+      {acceptedMember && <p className="application-membership-note">Project member in YakKeeper. GitHub permissions are managed separately.</p>}
+      <div className="request-footer application-footer">
+        {acceptedMember && project && <button className="small-button contribute" onClick={() => {setBoardProject(project); open("board");}}>Task board<ArrowUpRight size={13}/></button>}
+        {(project?.repo || received) && <details className="application-details application-more"><summary>More</summary>
+          <div className="application-links">
+            {!user?.demo && project?.repo && <a className="text-button" href={project.repo} target="_blank" rel="noreferrer">GitHub repository<ArrowUpRight size={13}/></a>}
+            {!user?.demo && received && acceptedMember && project?.repo && <a className="text-button" href={project.repo.replace(/\/$/, "") + "/settings/access"} target="_blank" rel="noreferrer">GitHub permissions<ArrowUpRight size={13}/></a>}
+            {received && <button disabled={busy} className="text-button block-applicant" onClick={()=>action({action:"block",user_id:r.applicant_id})}>{hub.blocks.includes(r.applicant_id) ? "Unblock across my projects" : "Block across my projects"}</button>}
+          </div>
+        </details>}
       </div>
     </article>;
   }
+
   return (
-    <div className="app">
+    <div className={"app" + (projectId ? " shared-project-page" : "")}>
       <div className="ambient-background" aria-hidden="true">
         <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" fill="none">
           <defs>
@@ -553,6 +568,10 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
             {feedback}
           </p>
         )}
+        {user && view === "my" && hub.invitations?.length > 0 && <section className="project-invitations" aria-label="Project invitations">
+          <h2>Project invitations</h2>
+          {hub.invitations.map(invite=><article key={invite.id} className="project-invitation"><div><strong>{invite.project_title}</strong><p>@{invite.owner_login} invited you as @{user.github_login}.</p></div><button className="small-button contribute" disabled={busy} onClick={()=>void action({action:"respondInvite",id:invite.id,decision:"accept"})}>Accept invitation</button><button className="text-button" disabled={busy} onClick={()=>void action({action:"respondInvite",id:invite.id,decision:"decline"})}>Decline</button></article>)}
+        </section>}
         {loading ? (
           <div className="empty">Loading projects…</div>
         ) : !hub.configured ? (
@@ -689,11 +708,12 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
                       <span>Looking for</span>
                       <p>{p.needs}</p>
                     </div>}
+                    {p.starter_title && <div className="starter-task"><span>Start here{p.starter_time ? " · " + p.starter_time : ""}</span><strong>{p.starter_title}</strong>{p.starter_url && <a href={p.starter_url} target="_blank" rel="noreferrer">View GitHub issue<ArrowUpRight size={13}/></a>}</div>}
                     <div className="project-badges">
                       {p.beginner_friendly && <span>Beginner friendly</span>}
                       <span>
                         {p.contributions_open && p.status === "In progress"
-                          ? "Open to teammates"
+                          ? (p.join_policy === "invite_only" ? "Invite only" : "Open to teammates")
                           : "Requests closed"}
                       </span>
                       {view === "my" && <span>{p.owner_id === user?.id ? "Owner" : "Joined"}</span>}
@@ -701,6 +721,8 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
                     </div>
                   </div>
                   <div className="project-actions">
+                    <button className="small-button" onClick={async()=>{const url=location.origin+"/projects/"+p.id;try{await navigator.clipboard.writeText(url);setFeedback("Project link copied.");}catch{setFeedback("Share this link: "+url);}}}>Copy share link</button>
+                    {p.owner_id === user?.id && <button className="small-button" onClick={()=>{setBoardProject(p);open("members");}}>Members</button>}
                     {user && (p.owner_id === user.id || joined.has(p.id)) && <button className="small-button task-board-open" onClick={() => {setBoardProject(p); open("board");}}>Task board<ArrowUpRight size={13}/></button>}
                     {p.owner_id === user?.id ? (
                       <button className="small-button" onClick={() => edit(p)}>
@@ -729,11 +751,11 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
                         <button
                           className="small-button contribute"
                           disabled={
-                            !p.contributions_open || p.status !== "In progress"
+                            !p.contributions_open || p.status !== "In progress" || p.join_policy === "invite_only"
                           }
                           onClick={() => request(p, "contribution")}
                         >
-                          Join project
+                          {p.join_policy === "invite_only" ? "Invite only" : "Join project"}
                           <ArrowUpRight size={13} />
                         </button>
                       </>
@@ -914,7 +936,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
             role="dialog"
             aria-modal="true"
             aria-label={
-              modal === "board" ? "Project task board" : modal === "repos"
+              modal === "members" ? "Project members" : modal === "board" ? "Project task board" : modal === "repos"
                 ? "Choose a repository"
                 : modal === "editor"
                   ? "Project editor"
@@ -950,7 +972,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
             </div>}
             <div className="modal-heading">
               <h2>
-                {modal === "board" ? (boardProject?.title || "Project") + " · Task board" : modal === "repos"
+                {modal === "members" ? "Members · " + boardProject?.title : modal === "board" ? (boardProject?.title || "Project") + " · Task board" : modal === "repos"
                   ? "Choose a repository"
                   : modal === "editor"
                     ? editing
@@ -968,6 +990,7 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
                 <X size={19} />
               </button>
             </div>
+            {modal === "members" && boardProject && user && <ProjectMembers key={boardProject.id+user.id} project={boardProject} onChange={refresh}/>}
             {modal === "board" && boardProject && user && <TaskBoard key={boardProject.id + user.id} project={boardProject} user={user}/>}
             {modal === "login" && (
               <div className="login-panel">
@@ -1183,8 +1206,13 @@ export default function Board({ copyrightYear }: { copyrightYear: number }) {
                       })
                     }
                   />
-                  Accepting ideas and teammates
+                  Accepting ideas and requests
                 </label>
+                <label>How people join<select value={editor.join_policy || "open"} onChange={e=>setEditor({...editor,join_policy:e.target.value as "open"|"invite_only"})}><option value="open">Open applications</option><option value="invite_only">Invite only</option></select></label>
+                <p className="modal-note">Invite-only projects can stay public in Explore. Owners manage invitations in Members.</p>
+                <label>Starter task<input maxLength={160} value={editor.starter_title || ""} onChange={e=>setEditor({...editor,starter_title:e.target.value})} placeholder="One useful thing a newcomer can do"/></label>
+                <label>Starter task GitHub issue (optional)<input type="url" maxLength={500} value={editor.starter_url || ""} onChange={e=>setEditor({...editor,starter_url:e.target.value})} placeholder="https://github.com/owner/repo/issues/123"/></label>
+                <label>Starter task effort (optional)<input maxLength={80} value={editor.starter_time || ""} onChange={e=>setEditor({...editor,starter_time:e.target.value})} placeholder="30 minutes · beginner friendly"/></label>
                 <button className="button primary full" disabled={busy || bannerBusy}>
                   {busy
                     ? "Saving…"

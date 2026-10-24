@@ -10,6 +10,9 @@ export default function TaskBoard({ project, user }: { project: Project; user: P
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [editing,setEditing]=useState<string | null>(null);
+  const [archived,setArchived]=useState(false);
+  const [archivePage,setArchivePage]=useState(1);
   const read = useRef<AbortController | null>(null);
   const alive = useRef(true);
   const channel = useRef<BroadcastChannel | null>(null);
@@ -19,7 +22,7 @@ export default function TaskBoard({ project, user }: { project: Project; user: P
     const abort = new AbortController();
     read.current = abort;
     try {
-      const response = await fetch("/api/hub?resource=board&project_id=" + project.id,
+      const response = await fetch("/api/hub?resource=board&project_id=" + project.id + "&archived=" + archived + "&archive_page=" + archivePage,
         {headers: await authHeaders(), signal: abort.signal, cache: "no-store"});
       const data = await response.json();
       if (abort.signal.aborted || !alive.current) return;
@@ -32,7 +35,7 @@ export default function TaskBoard({ project, user }: { project: Project; user: P
     } catch (e) {
       if (!abort.signal.aborted && alive.current) setError((e as Error).message);
     }
-  }, [project.id]);
+  }, [project.id, archived, archivePage]);
   useEffect(() => {
     alive.current = true;
     void refresh();
@@ -77,29 +80,30 @@ export default function TaskBoard({ project, user }: { project: Project; user: P
     e.preventDefault();
     const form = e.currentTarget;
     const data = new FormData(form);
-    if (await change({action:"createTask", task:{title:data.get("title"),
-      description:data.get("description"), status:data.get("status")}})) {
+    if (await change({action:editing ? "editTask" : "createTask", ...(editing ? {id:editing} : {}), task:{title:data.get("title"),
+      description:data.get("description"), ...(!editing ? {status:data.get("status")} : {})}})) {
       form.reset();
-      setAdding(false);
+      setAdding(false);setEditing(null);
     }
   }
   return <div className="task-board" aria-busy={busy}>
     <div className="task-board-toolbar">
       <p>Plan together. Pick a task, show you’re working on it, and mark it finished.</p>
       <button type="button" className="small-button" onClick={() => void refresh()} disabled={busy} aria-label="Refresh tasks"><RefreshCw size={15}/>Refresh</button>
-      {board && !readonly && <button type="button" className="small-button contribute" onClick={() => setAdding(!adding)} disabled={busy} aria-expanded={adding}><Plus size={15}/>Add task</button>}
+      {board && !readonly && !archived && <button type="button" className="small-button contribute" onClick={() => {setEditing(null);setAdding(!adding);}} disabled={busy} aria-expanded={adding}><Plus size={15}/>Add task</button>}
     </div>
     {error && <p className="task-board-error" role="alert">{error}</p>}
     {!board && !error && <p role="status">Loading tasks…</p>}
     {readonly && <p className="task-board-note">This project is archived. Its board is read-only.</p>}
-    {adding && board && !readonly && <form className="task-create" onSubmit={create}>
-      <label>Task title<input name="title" required minLength={3} maxLength={160} placeholder="What needs to be done?" disabled={busy}/></label>
-      <label>Details <small>(optional)</small><textarea name="description" maxLength={2000} rows={3} placeholder="A useful outcome or next step" disabled={busy}/></label>
-      <label>Start in<select name="status" defaultValue="Future" disabled={busy}>{taskStatuses.map(status => <option key={status}>{status}</option>)}</select></label>
-      <div className="task-create-actions"><button className="button primary" disabled={busy}>Create task</button><button type="button" className="small-button" onClick={() => setAdding(false)} disabled={busy}>Cancel</button></div>
+    <div className="task-view-tabs" role="group" aria-label="Task views"><button className="small-button" aria-pressed={!archived} onClick={()=>{setArchived(false);setAdding(false);setEditing(null);setBoard(null);}} disabled={busy}>Active tasks</button><button className="small-button" aria-pressed={archived} onClick={()=>{setArchived(true);setArchivePage(1);setAdding(false);setEditing(null);setBoard(null);}} disabled={busy}>Archived</button></div>
+    {adding && board && !readonly && <form className="task-create" onSubmit={create} key={editing || "new-task"}>
+      <label>Task title<input name="title" required minLength={3} maxLength={160} placeholder="What needs to be done?" defaultValue={board.tasks.find(t=>t.id===editing)?.title || ""} disabled={busy}/></label>
+      <label>Details <small>(optional)</small><textarea name="description" maxLength={2000} rows={3} placeholder="A useful outcome or next step" defaultValue={board.tasks.find(t=>t.id===editing)?.description || ""} disabled={busy}/></label>
+      {!editing && <label>Start in<select name="status" defaultValue="Future" disabled={busy}>{taskStatuses.map(status => <option key={status}>{status}</option>)}</select></label>}
+      <div className="task-create-actions"><button className="button primary" disabled={busy}>{editing ? "Save task" : "Create task"}</button><button type="button" className="small-button" onClick={() => {setAdding(false);setEditing(null);}} disabled={busy}>Cancel</button></div>
     </form>}
     {board && <>
-      <div className="task-board-summary"><Users size={15}/><span>Owner and accepted members</span><span>{board.tasks.filter(t => t.status === "Finished").length} / {board.tasks.length} finished</span></div>
+      <div className="task-board-summary"><Users size={15}/><span>Owner and accepted members</span><span>{archived ? "Archived tasks" : board.tasks.filter(t => t.status === "Finished").length + " / " + board.tasks.length + " finished"}</span></div>
       <div className="kanban-columns">{taskStatuses.map(status => {
         const tasks = board.tasks.filter(t => t.status === status);
         return <section className={"kanban-column column-" + status.toLowerCase()} key={status} aria-label={status + " tasks"}>
@@ -113,11 +117,13 @@ export default function TaskBoard({ project, user }: { project: Project; user: P
               <div className="task-workers" aria-label="Task participants">
                 {workers.length ? workers.map(w => <span key={w.id}>@{w.login}</span>) : <small>No one assigned yet</small>}
               </div>
-              <label className="task-status-label">Status<select aria-label={"Status for " + task.title} value={task.status} disabled={busy || readonly}
+              <label className="task-status-label">Status<select aria-label={"Status for " + task.title} value={task.status} disabled={busy || readonly || archived}
                 onChange={e => void change({action:"taskStatus", id:task.id, status:e.target.value})}>
                 {taskStatuses.map(s => <option key={s}>{s}</option>)}
               </select></label>
-              {!readonly && (task.status !== "Finished" || mine) && <button type="button" className={"task-work-button" + (mine ? " working" : "")}
+              {!readonly && !archived && <div className="task-maintenance">{(project.owner_id === user.id || task.author_id === user.id) && <button className="text-button" onClick={()=>{setEditing(task.id);setAdding(true);}} disabled={busy}>Edit task</button>}{project.owner_id === user.id && <button className="text-button" onClick={()=>void change({action:"archiveTask",id:task.id,archived:true})} disabled={busy}>Archive task</button>}</div>}
+              {!readonly && archived && project.owner_id === user.id && <button className="small-button" onClick={()=>void change({action:"archiveTask",id:task.id,archived:false})} disabled={busy}>Restore task</button>}
+              {!readonly && !archived && (task.status !== "Finished" || mine) && <button type="button" className={"task-work-button" + (mine ? " working" : "")}
                 disabled={busy} aria-pressed={mine} onClick={() => void change({action:"workOnTask", id:task.id, working:!mine})}>
                 {mine ? <CheckCircle2 size={15}/> : <Plus size={15}/>}{mine ? "I’m on this · leave" : "I’m working on this"}
               </button>}
@@ -126,6 +132,7 @@ export default function TaskBoard({ project, user }: { project: Project; user: P
           {!tasks.length && <p className="kanban-empty">{status === "Future" ? "Ideas and next steps go here." : status === "Ongoing" ? "Ready when the team is." : "Finished work will appear here."}</p>}
         </section>;
       })}</div>
+      {archived && <div className="task-archive-pagination"><button className="small-button" onClick={()=>{setArchivePage(p=>p-1);setBoard(null);}} disabled={busy || archivePage===1}>Previous</button><span>Page {archivePage}</span><button className="small-button" onClick={()=>{setArchivePage(p=>p+1);setBoard(null);}} disabled={busy || !board.hasMore}>Next</button></div>}
       <p className="task-board-note">Changes sync when you return to this tab and every 20 seconds. Joining a task does not grant GitHub repository access.</p>
     </>}
   </div>;
