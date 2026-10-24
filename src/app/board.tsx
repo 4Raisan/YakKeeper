@@ -22,6 +22,7 @@ import {
   ShieldCheck,
   Flag,
 } from "lucide-react";
+import LoadingIndicator from "./loading-indicator";
 import ProjectMembers from "./project-members";
 import TaskBoard from "./task-board";
 import ProjectArt from "./project-art";
@@ -58,6 +59,7 @@ export default function Board({ copyrightYear, projectId }: { copyrightYear: num
     [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
     [feedback, setFeedback] = useState("");
+  const [refreshing,setRefreshing]=useState(false);
   const [view, setView] = useState("explore"),
     [query, setQuery] = useState(""),
     [filter, setFilter] = useState("All projects"),
@@ -94,6 +96,7 @@ export default function Board({ copyrightYear, projectId }: { copyrightYear: num
     readAbort.current?.abort();
     const abort = new AbortController();
     readAbort.current = abort;
+    setRefreshing(true);
     try {
       const response = await fetch(projectId ? "/api/hub?resource=project&project_id=" + encodeURIComponent(projectId) : "/api/hub?page=" + page, {
         headers: await authHeaders(),
@@ -110,7 +113,7 @@ export default function Board({ copyrightYear, projectId }: { copyrightYear: num
       if (!abort.signal.aborted && gate.current.current(ticket))
         setError((e as Error).message);
     } finally {
-      if (gate.current.current(ticket)) setLoading(false);
+      if (gate.current.current(ticket)) {setLoading(false);setRefreshing(false);}
     }
   }, [page, projectId]);
   useEffect(() => {
@@ -561,9 +564,10 @@ export default function Board({ copyrightYear, projectId }: { copyrightYear: num
         {error && (
           <div role="alert" className="alert">
             {error}
-            <button onClick={() => void refresh()}>Retry</button>
+            <button disabled={refreshing} onClick={() => void refresh()}>{refreshing ? <LoadingIndicator label="Retrying…"/> : "Retry"}</button>
           </div>
         )}
+        {busy && !modal && !form && <div className="action-loading"><LoadingIndicator label="Saving changes…"/></div>}
         {feedback && !modal && !form && (
           <p role="status" className="feedback">
             {feedback}
@@ -574,7 +578,7 @@ export default function Board({ copyrightYear, projectId }: { copyrightYear: num
           {hub.invitations.map(invite=><article key={invite.id} className="project-invitation"><div><strong>{invite.project_title}</strong><p>@{invite.owner_login} invited you as @{user.github_login}.</p></div><button className="small-button contribute" disabled={busy} onClick={()=>void action({action:"respondInvite",id:invite.id,decision:"accept"})}>Accept invitation</button><button className="text-button" disabled={busy} onClick={()=>void action({action:"respondInvite",id:invite.id,decision:"decline"})}>Decline</button></article>)}
         </section>}
         {loading ? (
-          <div className="empty">Loading projects…</div>
+          <div className="empty"><LoadingIndicator label="Loading projects…"/></div>
         ) : !hub.configured ? (
           <div className="empty">
             <Layers size={26} />
@@ -619,13 +623,15 @@ export default function Board({ copyrightYear, projectId }: { copyrightYear: num
               </div>
             )}
           </section>
+        ) : view === "moderation" && user?.role !== "owner" ? (
+          <div className="empty"><ShieldCheck size={24}/><h2>Owner/admin access only</h2><p>Reports are reviewed by the platform owner.</p><button className="small-button" onClick={()=>navigate("explore")}>Back to Explore</button></div>
         ) : view === "moderation" ? (
-          <section>
+          <section className="moderation-list" aria-label="Project reports">
             {hub.reports.map((r) => (
               <article className="request" key={r.id}>
                 <div className="request-meta">
                   <span>{r.status}</span>
-                  <span>{r.project_id}</span>
+                  <span>{hub.projects.find(p=>p.id===r.project_id)?.title || "Reported project"}</span>
                 </div>
                 <p>{r.reason}</p>
                 {r.status === "Open" && (
@@ -663,7 +669,7 @@ export default function Board({ copyrightYear, projectId }: { copyrightYear: num
             {!hub.reports.length && (
               <div className="empty">
                 <ShieldCheck size={24} />
-                <p>No reports.</p>
+                <p>No project reports to review.</p>
               </div>
             )}
           </section>
@@ -868,7 +874,7 @@ export default function Board({ copyrightYear, projectId }: { copyrightYear: num
                           Visible only to you and this project’s owner.
                         </small>
                         <button className="button primary" disabled={busy}>
-                          Send
+                          {busy ? <LoadingIndicator label="Sending…"/> : "Send"}
                           <ArrowRight size={14} />
                         </button>
                       </div>
@@ -908,9 +914,10 @@ export default function Board({ copyrightYear, projectId }: { copyrightYear: num
             {hub.hasMore && view === "explore" && (
               <button
                 className="button small-button load-more"
+                disabled={refreshing}
                 onClick={() => setPage(page + 1)}
               >
-                Load more projects
+                {refreshing ? <LoadingIndicator label="Loading more projects…"/> : "Load more projects"}
               </button>
             )}
           </section>
@@ -1002,7 +1009,7 @@ export default function Board({ copyrightYear, projectId }: { copyrightYear: num
                   onClick={signIn}
                 >
                   <Github size={18} />
-                  {busy ? "Connecting to GitHub…" : "Continue with GitHub"}
+                  {busy ? <LoadingIndicator label="Connecting to GitHub…"/> : "Continue with GitHub"}
                   <ArrowUpRight size={14} />
                 </button>
                 <small className="login-trust"><ShieldCheck size={16} /><span>GitHub handles sign-in.<br />No password sharing or repository write access.</span></small>
@@ -1102,7 +1109,7 @@ export default function Board({ copyrightYear, projectId }: { copyrightYear: num
                       </button>
                     ))}
                 </div>
-                {repoLoading && <p role="status">Loading repositories…</p>}
+                {repoLoading && <LoadingIndicator label="Loading repositories…"/>}
                 {!repoLoading && !repos.length && !repoError && (
                   <p>No public repositories found.</p>
                 )}
@@ -1146,7 +1153,7 @@ export default function Board({ copyrightYear, projectId }: { copyrightYear: num
                   <label className="banner-upload banner-upload-bar">
                   {(editor.banner_data || (editor.banner_data !== null && editor.banner_url)) && <img className="banner-preview" src={editor.banner_data || editor.banner_url} alt="Banner preview" />}
                   <div>
-                    <span>{bannerBusy ? "Preparing image…" : (editor.banner_data || (editor.banner_data !== null && editor.banner_url)) ? "Change banner" : "Add banner"}</span>
+                    <span>{bannerBusy ? <LoadingIndicator label="Preparing image…"/> : (editor.banner_data || (editor.banner_data !== null && editor.banner_url)) ? "Change banner" : "Add banner"}</span>
                       <input type="file" accept="image/png,image/jpeg,image/webp" disabled={busy || bannerBusy} onChange={async e => {
                         const file = e.target.files?.[0]; e.target.value="";
                         if (!file) return;
@@ -1216,7 +1223,7 @@ export default function Board({ copyrightYear, projectId }: { copyrightYear: num
                 <label>Starter task effort (optional)<input maxLength={80} value={editor.starter_time || ""} onChange={e=>setEditor({...editor,starter_time:e.target.value})} placeholder="30 minutes · beginner friendly"/></label>
                 <button className="button primary full" disabled={busy || bannerBusy}>
                   {busy
-                    ? "Saving…"
+                    ? <LoadingIndicator label="Saving…"/>
                     : editing
                       ? "Save changes"
                       : "Publish project"}
@@ -1230,7 +1237,7 @@ export default function Board({ copyrightYear, projectId }: { copyrightYear: num
                       <button type="button" className="small-button" disabled={busy} onClick={()=>setConfirmDelete(false)}>Keep project</button>
                       <button type="button" className="small-button danger-button" disabled={busy || bannerBusy} onClick={async()=>{
                         if(await action({action:"deleteProject",id:editing,confirm:true})) {setModal("");setEditing("");setExpanded("");}
-                      }}>{busy ? "Deleting…" : "Delete permanently"}</button>
+                      }}>{busy ? <LoadingIndicator label="Deleting…"/> : "Delete permanently"}</button>
                     </div>
                   </div>}
                 </div>}
@@ -1264,7 +1271,7 @@ export default function Board({ copyrightYear, projectId }: { copyrightYear: num
                   />
                 </label>
                 <button disabled={busy} className="button primary full">
-                  Send report
+                  {busy ? <LoadingIndicator label="Sending report…"/> : "Send report"}
                   <Flag size={14} />
                 </button>
               </form>

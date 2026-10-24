@@ -40,3 +40,11 @@ The browser check uses separate owner/member/anonymous contexts. It verifies an 
 The three ordered migrations are applied before deployment. A query checks that accepted contributors have active membership records. A transactional production-Postgres check exercises the application-to-membership trigger, revocation, capacity enforcement, archive/restore, retained assignment, starter fields and cascade cleanup, then rolls back every fixture change. Check RLS and direct-client grants separately. Security advisor informational notices for no policies are expected for server-only tables with client privileges revoked; the pre-existing password-protection warning belongs to the GitHub-only Auth configuration.
 
 After pushing, verify GitHub Actions, Vercel deployment status, the public project URL, and anonymous denial on the members/board APIs. Local browser personas are not a claim that a fresh two-real-GitHub-account OAuth test has been performed for the new invitations.
+
+## Loading and moderation review — 25 October 2026
+
+The Reports navigation item remains platform-owner/admin-only. Direct navigation by a regular user displays an explicit access message rather than a misleading empty queue. Project names replace report UUIDs where the listing is loaded, and report text follows the active theme's foreground color.
+
+The shared loading component provides visible text, a status announcement, and a CSS spinner. Reduced-motion preferences stop its rotation. Initial project/repository/member/task reads and visible writes show feedback; background task refresh retains the board, and paginated project loading prevents repeated clicks while pending. The member panel suppresses its empty message until the first read finishes.
+
+`check-loading-moderation.pw.js` uses controlled network gates to verify the animation, reduced motion, pending reads and writes, regular-user denial, owner report review, and a 390px layout. Run it against a fresh isolated demo database on port 3109 using the same Playwright command as the collaboration check, substituting the filename. These checks do not perform live OAuth or send real-user reports/invitations.

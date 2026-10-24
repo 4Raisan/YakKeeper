@@ -1,12 +1,14 @@
 "use client";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { Plus, RefreshCw, Users, CheckCircle2 } from "lucide-react";
+import LoadingIndicator from "./loading-indicator";
 import { authHeaders } from "@/lib/supabase-browser";
 import { taskStatuses, type TaskBoardState } from "@/lib/task-types";
 import type { Project, Profile } from "@/lib/hub-types";
 
 export default function TaskBoard({ project, user }: { project: Project; user: Profile }) {
   const [board, setBoard] = useState<TaskBoardState | null>(null);
+  const [refreshing,setRefreshing]=useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -21,6 +23,7 @@ export default function TaskBoard({ project, user }: { project: Project; user: P
     read.current?.abort();
     const abort = new AbortController();
     read.current = abort;
+    setRefreshing(true);
     try {
       const response = await fetch("/api/hub?resource=board&project_id=" + project.id + "&archived=" + archived + "&archive_page=" + archivePage,
         {headers: await authHeaders(), signal: abort.signal, cache: "no-store"});
@@ -34,6 +37,8 @@ export default function TaskBoard({ project, user }: { project: Project; user: P
       setError("");
     } catch (e) {
       if (!abort.signal.aborted && alive.current) setError((e as Error).message);
+    } finally {
+      if (!abort.signal.aborted && alive.current) setRefreshing(false);
     }
   }, [project.id, archived, archivePage]);
   useEffect(() => {
@@ -89,11 +94,12 @@ export default function TaskBoard({ project, user }: { project: Project; user: P
   return <div className="task-board" aria-busy={busy}>
     <div className="task-board-toolbar">
       <p>Plan together. Pick a task, show you’re working on it, and mark it finished.</p>
-      <button type="button" className="small-button" onClick={() => void refresh()} disabled={busy} aria-label="Refresh tasks"><RefreshCw size={15}/>Refresh</button>
+      <button type="button" className="small-button" onClick={() => void refresh()} disabled={busy || refreshing} aria-label="Refresh tasks"><RefreshCw size={15} className={refreshing && board ? "loading-rotate" : undefined}/>{refreshing && board ? "Refreshing…" : "Refresh"}</button>
       {board && !readonly && !archived && <button type="button" className="small-button contribute" onClick={() => {setEditing(null);setAdding(!adding);}} disabled={busy} aria-expanded={adding}><Plus size={15}/>Add task</button>}
     </div>
     {error && <p className="task-board-error" role="alert">{error}</p>}
-    {!board && !error && <p role="status">Loading tasks…</p>}
+    {!board && !error && <LoadingIndicator label="Loading tasks…"/>}
+    {busy && <LoadingIndicator label="Saving task changes…"/>}
     {readonly && <p className="task-board-note">This project is archived. Its board is read-only.</p>}
     <div className="task-view-tabs" role="group" aria-label="Task views"><button className="small-button" aria-pressed={!archived} onClick={()=>{setArchived(false);setAdding(false);setEditing(null);setBoard(null);}} disabled={busy}>Active tasks</button><button className="small-button" aria-pressed={archived} onClick={()=>{setArchived(true);setArchivePage(1);setAdding(false);setEditing(null);setBoard(null);}} disabled={busy}>Archived</button></div>
     {adding && board && !readonly && <form className="task-create" onSubmit={create} key={editing || "new-task"}>
