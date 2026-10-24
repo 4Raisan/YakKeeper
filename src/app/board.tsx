@@ -366,6 +366,7 @@ export default function Board({ copyrightYear, projectId }: { copyrightYear: num
       (p) =>
         filter === "All projects" ||
         (filter === "Open to teammates" &&
+          p.join_policy !== "invite_only" &&
           p.contributions_open &&
           p.status === "In progress") ||
         (filter === "Beginner friendly" && p.beginner_friendly) ||
