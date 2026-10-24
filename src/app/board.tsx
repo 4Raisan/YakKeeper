@@ -387,35 +387,28 @@ export default function Board({ copyrightYear, projectId }: { copyrightYear: num
   function requestCard(r: HubRequest) {
     const received = applicationTab === "received";
     const project = hub.projects.find(p => p.id === r.project_id);
-    const contactLogin = received ? r.applicant_login : project?.owner_login;
-    const canConnect = contactLogin && !contactLogin.endsWith("-demo") && !user?.demo;
+    const login = r.applicant_login || (received ? r.name : user?.github_login) || r.name;
+    const canLink = Boolean(login && !user?.demo && !login.endsWith("-demo"));
     const acceptedMember = r.status === "Accepted" && r.kind === "contribution";
-    const displayName = received ? r.name : r.project_title;
-    const identityIsName = received && contactLogin &&
-      displayName.replace(/^@/, "").toLowerCase() === contactLogin.toLowerCase();
-    return <article className="request compact-request" key={r.id}>
-      <div className="request-top">
-        <div className="request-title">
-          {canConnect && identityIsName
-            ? <a className="application-person" href={"https://github.com/" + contactLogin} target="_blank" rel="noreferrer">@{contactLogin}<ArrowUpRight size={12}/></a>
-            : <><strong>{displayName}</strong>{canConnect && <a href={"https://github.com/" + contactLogin} target="_blank" rel="noreferrer">@{contactLogin}<ArrowUpRight size={12}/></a>}</>}
+    const projectTitle = project?.title || r.project_title;
+    return <article className="request application-card" key={r.id}>
+      <div className="application-main">
+        <div className="application-heading">
+          {canLink ? <a className="application-username" href={"https://github.com/" + login} target="_blank" rel="noreferrer">@{login}<ArrowUpRight size={14}/></a> : <strong className="application-username">@{login}</strong>}
         </div>
-        {received ? <select className="request-status" disabled={busy} aria-label={"Status for " + r.name} value={r.status} onChange={e=>action({action:"status",id:r.id,status:e.target.value})}>
-          {["Received","Reviewing","Accepted","Declined"].map(status=><option key={status}>{status}</option>)}
-        </select> : <span className="status">{r.status}</span>}
+        <a className="application-project" href={"/projects/" + r.project_id}>{projectTitle}</a>
+        <span className="application-kind">{r.kind === "idea" ? "Idea" : "Join request"}</span>
+        {r.message.length > 240 ? <details className="application-message-details"><summary>Read full {r.kind === "idea" ? "idea" : "message"}</summary><p className="application-message pre-wrap">{r.message}</p></details> : <p className="application-message pre-wrap">{r.message}</p>}
       </div>
-      <div className="request-meta"><span>{r.kind === "idea" ? "Idea" : "Join request"}</span>{received && <span>{r.project_title}</span>}<time dateTime={r.created_at}>{new Date(r.created_at).toLocaleDateString()}</time></div>
-      <p className="application-message pre-wrap">{r.message}</p>
-      {acceptedMember && <p className="application-membership-note">Project member in YakKeeper. GitHub permissions are managed separately.</p>}
-      <div className="request-footer application-footer">
-        {acceptedMember && project && <button className="small-button contribute" onClick={() => {setBoardProject(project); open("board");}}>Task board<ArrowUpRight size={13}/></button>}
-        {(project?.repo || received) && <details className="application-details application-more"><summary>More</summary>
-          <div className="application-links">
-            {!user?.demo && project?.repo && <a className="text-button" href={project.repo} target="_blank" rel="noreferrer">GitHub repository<ArrowUpRight size={13}/></a>}
-            {!user?.demo && received && acceptedMember && project?.repo && <a className="text-button" href={project.repo.replace(/\/$/, "") + "/settings/access"} target="_blank" rel="noreferrer">GitHub permissions<ArrowUpRight size={13}/></a>}
-            {received && <button disabled={busy} className="text-button block-applicant" onClick={()=>action({action:"block",user_id:r.applicant_id})}>{hub.blocks.includes(r.applicant_id) ? "Unblock across my projects" : "Block across my projects"}</button>}
-          </div>
-        </details>}
+      <div className="application-side">
+        {received ? <select className="request-status" disabled={busy} aria-label={"Status for " + login} value={r.status} onChange={e=>action({action:"status",id:r.id,status:e.target.value})}>
+          {["Received","Reviewing","Accepted","Declined"].map(status=><option key={status}>{status}</option>)}
+        </select> : <span className="application-status">{r.status}</span>}
+        <time dateTime={r.created_at}>{new Date(r.created_at).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"})}</time>
+        <div className="application-actions">
+          {acceptedMember && project && <button className="small-button contribute" onClick={() => {setBoardProject(project); open("board");}}>Task board<ArrowUpRight size={14}/></button>}
+          {project?.repo && <a className="small-button" href={project.repo} target="_blank" rel="noreferrer">Repository<ArrowUpRight size={14}/></a>}
+        </div>
       </div>
     </article>;
   }

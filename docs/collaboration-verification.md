@@ -6,7 +6,7 @@
 - **Admission:** public projects can use open applications or invite only. Invite-only joining is enforced by the API, not just the disabled button. Ideas remain available when requests are open. Private listings remain owner-only; existing privacy is preserved. Owners can remove members without republishing a private listing.
 - **Share:** stable `/projects/<uuid>` URLs, copy-link controls, and owner-selected starter task/effort/optional GitHub issue. Issue links must belong to the connected repository. Team tasks and member lists are never returned to anonymous visitors.
 - **Tasks:** creator/owner title and description editing; owner-only archive/restore, paginated archives, retained participation, and a database-enforced limit of 200 active tasks. Archives do not consume active capacity. Normal updates reject archived tasks.
-- **Applications:** one identity and message, a visible task-board action, and secondary controls under More. Account-wide blocking is explicitly labeled.
+- **Applications:** compact applicant/project rows with request kind, date, owner review selector or applicant status badge, and visible right-side Task board/Repository actions where available. Membership disclaimers and secondary GitHub-permission controls are omitted. Long proposals expand on demand.
 
 No GitHub write scopes, repository permission changes, email/WhatsApp delivery, or invitations to real users are involved in automated tests.
 
@@ -48,3 +48,7 @@ The Reports navigation item remains platform-owner/admin-only. Direct navigation
 The shared loading component provides visible text, a status announcement, and a CSS spinner. Reduced-motion preferences stop its rotation. Initial project/repository/member/task reads and visible writes show feedback; background task refresh retains the board, and paginated project loading prevents repeated clicks while pending. The member panel suppresses its empty message until the first read finishes.
 
 `check-loading-moderation.pw.js` uses controlled network gates to verify the animation, reduced motion, pending reads and writes, regular-user denial, owner report review, and a 390px layout. Run it against a fresh isolated demo database on port 3109 using the same Playwright command as the collaboration check, substituting the filename. These checks do not perform live OAuth or send real-user reports/invitations.
+
+## Application layout review — 25 October 2026
+
+`check-application-layout.pw.js` checks received and sent applications at desktop and 390px widths. It verifies owner review controls, applicant status, visible task-board and repository actions, a compact card height, readable dates, and no horizontal overflow. Repository URLs in that sandbox UI check are display fixtures; they are not opened. The test also checks search/filter inner outlines and glow are removed, while keyboard focus retains one wrapper outline. Desktop dark-theme and mobile light-theme screenshots stay in `output/playwright/`.
